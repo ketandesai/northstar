@@ -2,19 +2,21 @@
 
 import React from 'react';
 import { ConnectedAccount } from '@/types/account';
-import { Landmark, CreditCard, PiggyBank, Wallet, Trash2, CheckCircle2 } from 'lucide-react';
+import { Landmark, CreditCard, PiggyBank, Wallet, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import AddAccountButton from './AddAccountButton';
 
 interface ConnectedAccountsListProps {
   accounts: ConnectedAccount[];
   onRemoveAccount?: (accountId: string) => void;
   onAccountsAdded?: (accounts: ConnectedAccount[]) => void;
+  isLoading?: boolean;
 }
 
 export default function ConnectedAccountsList({
   accounts,
   onRemoveAccount,
   onAccountsAdded,
+  isLoading = false,
 }: ConnectedAccountsListProps) {
   const getAccountIcon = (type: string, subtype: string | null) => {
     const sub = subtype?.toLowerCase();
@@ -37,6 +39,16 @@ export default function ConnectedAccountsList({
       currency: currency || 'USD',
     }).format(amount);
   };
+
+  if (isLoading && accounts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
+        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Loading your connected accounts...</p>
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Syncing with PostgreSQL database</p>
+      </div>
+    );
+  }
 
   if (accounts.length === 0) {
     return (

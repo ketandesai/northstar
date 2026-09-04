@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as plaidLib from '@/lib/plaid';
 import { POST } from '@/app/api/plaid/exchange-public-token/route';
+import * as dbLib from '@/lib/db';
 import { AxiosResponse } from 'axios';
 import { ItemPublicTokenExchangeResponse, AccountsGetResponse, AccountType, AccountSubtype } from 'plaid';
 
@@ -24,7 +25,7 @@ describe('/api/plaid/exchange-public-token', () => {
     expect(data.code).toBe('MISSING_PUBLIC_TOKEN');
   });
 
-  it('successfully exchanges token and retrieves formatted accounts', async () => {
+  it('successfully exchanges token, retrieves accounts, and persists to PostgreSQL', async () => {
     vi.spyOn(plaidLib, 'isPlaidConfigured', 'get').mockReturnValue(true);
 
     vi.spyOn(plaidLib.plaidClient, 'itemPublicTokenExchange').mockResolvedValue({
@@ -83,6 +84,15 @@ describe('/api/plaid/exchange-public-token', () => {
       },
     } as unknown as AxiosResponse<AccountsGetResponse>);
 
+    const queryMock = vi.fn().mockResolvedValue({ rowCount: 1, rows: [] });
+    const client = {
+      query: queryMock,
+      release: vi.fn(),
+    };
+    const clientConnect = vi.spyOn(dbLib, 'db', 'get').mockReturnValue({
+      connect: vi.fn().mockResolvedValue(client),
+    } as unknown as typeof dbLib.db);
+
     const req = new Request('http://localhost:3000/api/plaid/exchange-public-token', {
       method: 'POST',
       body: JSON.stringify({
@@ -114,6 +124,49 @@ describe('/api/plaid/exchange-public-token', () => {
         name: 'Chase Bank',
       },
     });
+
+    // Verify PostgreSQL persistence calls
+    expect(clientConnect).toHaveBeenCalled();
+
+    const sqlCalls = queryMock.mock.calls.map((call) => call[0] as string);
+
+    // Profile seed
+    expect(sqlCalls.some((sql) => sql.includes('INSERT INTO profiles'))).toBe(true);
+
+    // Plaid item upsert
+    const itemCall = queryMock.mock.calls.find((call) =>
+      (call[0] as string).includes('INSERT INTO plaid_items')
+    );
+    expect(itemCall).toBeDefined();
+    expect(itemCall?.[1]).toEqual(
+      expect.arrayContaining([
+        'item_123',
+        'access-sandbox-999',
+        'ins_chase',
+        'Chase Bank',
+      ])
+    );
+    expect(queryMock).toHaveBeenCalledWith('BEGIN');
+
+    // Account upserts for both accounts
+    expect(
+      sqlCalls.some((sql) => sql.includes('INSERT INTO accounts'))
+    ).toBe(true);
+
+    const accountCalls = queryMock.mock.calls.filter((call) =>
+      (call[0] as string).includes('INSERT INTO accounts')
+    );
+    expect(accountCalls).toHaveLength(2);
+    expect(accountCalls[0]?.[1]).toEqual(
+      expect.arrayContaining(['acc_01', 'item_123', 'Plaid Checking'])
+    );
+    expect(accountCalls[1]?.[1]).toEqual(
+      expect.arrayContaining(['acc_02', 'item_123', 'Plaid Savings'])
+    );
+
+    // Transaction committed and client released
+    expect(queryMock).toHaveBeenCalledWith('COMMIT');
+    expect(client.release).toHaveBeenCalled();
   });
 
   it('handles Plaid exchange failure gracefully', async () => {

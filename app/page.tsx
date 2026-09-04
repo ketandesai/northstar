@@ -8,7 +8,7 @@ import PlaidSetupBanner from '@/components/PlaidSetupBanner';
 import { useAccounts } from '@/hooks/useAccounts';
 
 export default function Home() {
-  const { accounts, addAccounts, removeAccount } = useAccounts();
+  const { accounts, loading, addAccounts, removeAccount } = useAccounts();
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans">
@@ -60,6 +60,7 @@ export default function Home() {
         {/* Accounts List Section */}
         <ConnectedAccountsList
           accounts={accounts}
+          isLoading={loading}
           onRemoveAccount={removeAccount}
           onAccountsAdded={addAccounts}
         />
