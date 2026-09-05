@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { usePlaidLink, PlaidLinkOnSuccess, PlaidLinkOnExit } from 'react-plaid-link';
+import React, { useEffect } from 'react';
 import { Plus, Loader2, Landmark, AlertCircle } from 'lucide-react';
 import { ConnectedAccount } from '@/types/account';
+import { usePlaidLinkContext } from './PlaidLinkProvider';
 
 interface AddAccountButtonProps {
   onAccountsAdded?: (accounts: ConnectedAccount[]) => void;
@@ -16,138 +16,24 @@ export default function AddAccountButton({
   variant = 'primary',
   className = '',
 }: AddAccountButtonProps) {
-  const [linkToken, setLinkToken] = useState<string | null>(null);
-  const [loadingToken, setLoadingToken] = useState<boolean>(false);
-  const [isExchanging, setIsExchanging] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { open, ready, isBusy, errorMessage, fetchLinkToken, setOnAccountsAdded } =
+    usePlaidLinkContext();
 
-  // Fetch Link Token from API
-  const generateLinkToken = useCallback(async () => {
-    setLoadingToken(true);
-    setErrorMessage(null);
-    try {
-      const response = await fetch('/api/plaid/create-link-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to initialize Plaid Link');
-      }
-
-      setLinkToken(data.link_token);
-      return data.link_token as string;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unable to connect to Plaid';
-      console.error('Error getting Plaid Link Token:', err);
-      setErrorMessage(msg);
-      return null;
-    } finally {
-      setLoadingToken(false);
-    }
-  }, []);
-
-  // Pre-fetch token asynchronously on mount
+  // Register this button's callback with the shared Plaid provider
   useEffect(() => {
-    let isMounted = true;
-    async function initToken() {
-      try {
-        const response = await fetch('/api/plaid/create-link-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const data = await response.json();
-        if (isMounted && response.ok && data.link_token) {
-          setLinkToken(data.link_token);
-        }
-      } catch {
-        // Silently handled on mount; user will see notice if clicked
-      }
-    }
-    initToken();
+    setOnAccountsAdded(onAccountsAdded);
     return () => {
-      isMounted = false;
+      setOnAccountsAdded(undefined);
     };
-  }, []);
-
-  // Handle successful account linking in Plaid modal
-  const onSuccess = useCallback<PlaidLinkOnSuccess>(
-    async (publicToken, metadata) => {
-      setIsExchanging(true);
-      setErrorMessage(null);
-      try {
-        const response = await fetch('/api/plaid/exchange-public-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            public_token: publicToken,
-            institution: metadata.institution
-              ? {
-                  id: metadata.institution.institution_id || 'plaid_bank',
-                  name: metadata.institution.name,
-                }
-              : undefined,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to exchange token and fetch accounts');
-        }
-
-        if (data.accounts && onAccountsAdded) {
-          const timestamp = new Date().toISOString();
-          const accountsWithTimestamp = data.accounts.map((acc: ConnectedAccount) => ({
-            ...acc,
-            connectedAt: timestamp,
-          }));
-          onAccountsAdded(accountsWithTimestamp);
-        }
-
-        // Generate fresh link token for subsequent links
-        generateLinkToken();
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Failed to complete bank account connection';
-        console.error('Error exchanging public token:', err);
-        setErrorMessage(msg);
-      } finally {
-        setIsExchanging(false);
-      }
-    },
-    [onAccountsAdded, generateLinkToken]
-  );
-
-  const onExit = useCallback<PlaidLinkOnExit>((error) => {
-    if (error) {
-      console.warn('Plaid Link exited with error:', error);
-      setErrorMessage(error.display_message || error.error_message || 'Plaid connection canceled');
-    }
-  }, []);
-
-  // Plaid Hook
-  const { open, ready } = usePlaidLink({
-    token: linkToken,
-    onSuccess,
-    onExit,
-  });
+  }, [onAccountsAdded, setOnAccountsAdded]);
 
   const handleClick = async () => {
-    setErrorMessage(null);
     if (ready) {
       open();
     } else {
-      const token = await generateLinkToken();
-      if (!token) {
-        return;
-      }
-      // Ready state updates with token on next render
+      await fetchLinkToken();
     }
   };
-
-  const isBusy = loadingToken || isExchanging;
 
   // Base styling variants
   const variantStyles = {
@@ -173,7 +59,7 @@ export default function AddAccountButton({
         {isBusy ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin text-current" />
-            <span>{isExchanging ? 'Connecting Account...' : 'Loading Plaid...'}</span>
+            <span>{'Loading Plaid...'}</span>
           </>
         ) : (
           <>

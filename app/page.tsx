@@ -5,12 +5,14 @@ import { Compass, ShieldCheck, Zap, RefreshCw, Landmark } from 'lucide-react';
 import AddAccountButton from '@/components/AddAccountButton';
 import ConnectedAccountsList from '@/components/ConnectedAccountsList';
 import PlaidSetupBanner from '@/components/PlaidSetupBanner';
+import { PlaidLinkProvider } from '@/components/PlaidLinkProvider';
 import { useAccounts } from '@/hooks/useAccounts';
 
 export default function Home() {
   const { accounts, loading, addAccounts, removeAccount } = useAccounts();
 
   return (
+    <PlaidLinkProvider>
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans">
       {/* Top Navigation */}
       <header className="sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
@@ -111,5 +113,6 @@ export default function Home() {
         </div>
       </main>
     </div>
+    </PlaidLinkProvider>
   );
 }

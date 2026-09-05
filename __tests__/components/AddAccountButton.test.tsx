@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import AddAccountButton from '@/components/AddAccountButton';
+import { PlaidLinkProvider } from '@/components/PlaidLinkProvider';
 
 const mockOpen = vi.fn();
 let mockReady = true;
@@ -14,6 +16,9 @@ vi.mock('react-plaid-link', () => ({
 }));
 
 describe('AddAccountButton component', () => {
+  const renderWithProvider = (ui: React.ReactElement) =>
+    render(<PlaidLinkProvider>{ui}</PlaidLinkProvider>);
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockReady = true;
@@ -37,12 +42,12 @@ describe('AddAccountButton component', () => {
   });
 
   it('renders Add Account button', () => {
-    render(<AddAccountButton />);
+    renderWithProvider(<AddAccountButton />);
     expect(screen.getByRole('button', { name: /add account/i })).toBeInTheDocument();
   });
 
   it('calls Plaid open when clicked and ready', () => {
-    render(<AddAccountButton />);
+    renderWithProvider(<AddAccountButton />);
     const button = screen.getByRole('button', { name: /add account/i });
 
     fireEvent.click(button);
@@ -66,7 +71,7 @@ describe('AddAccountButton component', () => {
       )
     );
 
-    render(<AddAccountButton />);
+    renderWithProvider(<AddAccountButton />);
     const button = screen.getByRole('button', { name: /add account/i });
 
     fireEvent.click(button);

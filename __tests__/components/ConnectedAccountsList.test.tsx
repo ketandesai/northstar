@@ -1,7 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ConnectedAccountsList from '@/components/ConnectedAccountsList';
+import { PlaidLinkProvider } from '@/components/PlaidLinkProvider';
 import { ConnectedAccount } from '@/types/account';
+
+const mockOpen = vi.fn();
+
+vi.mock('react-plaid-link', () => ({
+  usePlaidLink: vi.fn(() => ({
+    open: mockOpen,
+    ready: true,
+    error: null,
+  })),
+}));
 
 const mockAccounts: ConnectedAccount[] = [
   {
@@ -41,13 +53,26 @@ const mockAccounts: ConnectedAccount[] = [
 ];
 
 describe('ConnectedAccountsList component', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ link_token: 'link-mock-token-123' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+  });
+
+  const renderWithProvider = (ui: React.ReactElement) =>
+    render(<PlaidLinkProvider>{ui}</PlaidLinkProvider>);
+
   it('renders empty state when no accounts are connected', () => {
-    render(<ConnectedAccountsList accounts={[]} />);
+    renderWithProvider(<ConnectedAccountsList accounts={[]} />);
     expect(screen.getByText(/no bank accounts connected yet/i)).toBeInTheDocument();
   });
 
   it('renders linked accounts with names, masks, and balances', () => {
-    render(<ConnectedAccountsList accounts={mockAccounts} />);
+    renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
 
     expect(screen.getByText('Total Checking')).toBeInTheDocument();
     expect(screen.getByText('Premier Savings')).toBeInTheDocument();
@@ -58,7 +83,7 @@ describe('ConnectedAccountsList component', () => {
   });
 
   it('displays correct aggregate net balance', () => {
-    render(<ConnectedAccountsList accounts={mockAccounts} />);
+    renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
     // 2500 + 15000 = $17,500.00
     expect(screen.getByText('$17,500.00')).toBeInTheDocument();
     expect(screen.getByText(/Across 2 linked accounts/i)).toBeInTheDocument();
@@ -66,7 +91,9 @@ describe('ConnectedAccountsList component', () => {
 
   it('calls onRemoveAccount when delete button is clicked', () => {
     const handleRemove = vi.fn();
-    render(<ConnectedAccountsList accounts={mockAccounts} onRemoveAccount={handleRemove} />);
+    renderWithProvider(
+      <ConnectedAccountsList accounts={mockAccounts} onRemoveAccount={handleRemove} />
+    );
 
     const removeButtons = screen.getAllByRole('button', { name: /disconnect account/i });
     expect(removeButtons).toHaveLength(2);
