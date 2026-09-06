@@ -145,6 +145,57 @@ export interface Database {
           },
         ];
       };
+      balance_history: {
+        Row: {
+          id: number;
+          account_id: string;
+          user_id: string;
+          snapshot_date: string;
+          available_balance: number | null;
+          current_balance: number | null;
+          iso_currency_code: string;
+          source: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          account_id: string;
+          user_id?: string;
+          snapshot_date: string;
+          available_balance?: number | null;
+          current_balance?: number | null;
+          iso_currency_code?: string;
+          source?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          account_id?: string;
+          user_id?: string;
+          snapshot_date?: string;
+          available_balance?: number | null;
+          current_balance?: number | null;
+          iso_currency_code?: string;
+          source?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'balance_history_account_id_fkey';
+            columns: ['account_id'];
+            isOneToOne: false;
+            referencedRelation: 'accounts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'balance_history_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -172,6 +223,16 @@ export type AccountRow = Omit<
 };
 export type AccountInsert = Database['public']['Tables']['accounts']['Insert'];
 
+export type BalanceHistoryRow = Omit<
+  Database['public']['Tables']['balance_history']['Row'],
+  'available_balance' | 'current_balance'
+> & {
+  // pg returns NUMERIC columns as strings; accept both for consistency with AccountRow.
+  available_balance: number | string | null;
+  current_balance: number | string | null;
+};
+export type BalanceHistoryInsert = Database['public']['Tables']['balance_history']['Insert'];
+
 export const DEFAULT_GUEST_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 /**
@@ -195,6 +256,7 @@ export function mapAccountRowToConnectedAccount(row: AccountRow): ConnectedAccou
       name: row.institution_name || 'Connected Bank',
     },
     connectedAt: row.connected_at,
+    updatedAt: row.updated_at,
   };
 }
 

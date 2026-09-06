@@ -2,13 +2,16 @@
 
 import React from 'react';
 import { ConnectedAccount } from '@/types/account';
-import { Landmark, CreditCard, PiggyBank, Wallet, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import { Landmark, CreditCard, PiggyBank, Wallet, Trash2, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import AddAccountButton from './AddAccountButton';
 
 interface ConnectedAccountsListProps {
   accounts: ConnectedAccount[];
   onRemoveAccount?: (accountId: string) => void;
   onAccountsAdded?: (accounts: ConnectedAccount[]) => void;
+  onRefreshBalances?: () => void;
+  isRefreshing?: boolean;
+  lastRefreshedAt?: string | null;
   isLoading?: boolean;
 }
 
@@ -16,6 +19,9 @@ export default function ConnectedAccountsList({
   accounts,
   onRemoveAccount,
   onAccountsAdded,
+  onRefreshBalances,
+  isRefreshing = false,
+  lastRefreshedAt = null,
   isLoading = false,
 }: ConnectedAccountsListProps) {
   const getAccountIcon = (type: string, subtype: string | null) => {
@@ -38,6 +44,17 @@ export default function ConnectedAccountsList({
       style: 'currency',
       currency: currency || 'USD',
     }).format(amount);
+  };
+
+  const formatTimestamp = (isoDate: string) => {
+    const then = new Date(isoDate);
+    if (Number.isNaN(then.getTime())) return '';
+    return then.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   };
 
   if (isLoading && accounts.length === 0) {
@@ -114,8 +131,27 @@ export default function ConnectedAccountsList({
               <CheckCircle2 className="w-4 h-4" />
               <span>Active & Syncing</span>
             </div>
+            {lastRefreshedAt && (
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1 block">
+                Last updated {formatTimestamp(lastRefreshedAt)}
+              </span>
+            )}
           </div>
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
+            <button
+              type="button"
+              onClick={onRefreshBalances}
+              disabled={isRefreshing || !onRefreshBalances}
+              className="flex items-center justify-center gap-1.5 w-full px-3 py-2 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              aria-label="Refresh balances"
+            >
+              {isRefreshing ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+              {isRefreshing ? 'Refreshing...' : 'Refresh balances'}
+            </button>
             <AddAccountButton onAccountsAdded={onAccountsAdded} variant="compact" />
           </div>
         </div>

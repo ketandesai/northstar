@@ -7,41 +7,8 @@ export function useAccounts() {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Initial fetch on mount with cleanup
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadInitialAccounts() {
-      try {
-        const res = await fetch('/api/accounts');
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || `Failed to fetch accounts (${res.status})`);
-        }
-        const data = await res.json();
-        if (isMounted && Array.isArray(data.accounts)) {
-          setAccounts(data.accounts);
-        }
-      } catch (err: unknown) {
-        if (isMounted) {
-          const msg = err instanceof Error ? err.message : 'Unknown error loading accounts';
-          console.warn('Unable to load accounts from database:', msg);
-          setError(msg);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadInitialAccounts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
 
   // Manual refresh helper
   const fetchAccounts = useCallback(async () => {
@@ -61,6 +28,81 @@ export function useAccounts() {
       console.warn('Unable to load accounts from database:', msg);
       setError(msg);
     }
+  }, []);
+
+  // Refresh the latest balances from Plaid, then re-read the stored accounts.
+  const refreshBalances = useCallback(async () => {
+    setIsRefreshing(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/plaid/refresh-balances', { method: 'POST' });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to refresh balances (${res.status})`);
+      }
+      setLastRefreshedAt(new Date().toISOString());
+      await fetchAccounts();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to refresh balances';
+      console.error('Error refreshing balances from Plaid:', msg);
+      setError(msg);
+      throw err;
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [fetchAccounts]);
+
+  // Initial fetch on mount with cleanup
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadInitialAccounts() {
+      let loadedAccounts: ConnectedAccount[] = [];
+      try {
+        const res = await fetch('/api/accounts');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `Failed to fetch accounts (${res.status})`);
+        }
+        const data = await res.json();
+        if (Array.isArray(data.accounts)) {
+          loadedAccounts = data.accounts;
+        }
+        if (isMounted && Array.isArray(data.accounts)) {
+          setAccounts(data.accounts);
+        }
+      } catch (err: unknown) {
+        if (isMounted) {
+          const msg = err instanceof Error ? err.message : 'Unknown error loading accounts';
+          console.warn('Unable to load accounts from database:', msg);
+          setError(msg);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+
+      // If the newest stored balance is older than ~24h, refresh from Plaid so
+      // the dashboard stays current even before the next daily cron run.
+      if (!isMounted || loadedAccounts.length === 0) return;
+      const newestUpdatedAt = loadedAccounts.reduce<number | null>((latest, acc) => {
+        if (!acc.updatedAt) return latest;
+        const t = new Date(acc.updatedAt).getTime();
+        return latest === null || t > latest ? t : latest;
+      }, null);
+      if (newestUpdatedAt === null) return;
+      if (Date.now() - newestUpdatedAt > 24 * 60 * 60 * 1000) {
+        refreshBalances().catch(() => {});
+      }
+    }
+
+    loadInitialAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Persist new accounts to PostgreSQL
@@ -133,8 +175,11 @@ export function useAccounts() {
     accounts,
     loading,
     error,
+    isRefreshing,
+    lastRefreshedAt,
     addAccounts,
     removeAccount,
     refresh: fetchAccounts,
+    refreshBalances,
   };
 }

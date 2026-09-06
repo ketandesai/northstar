@@ -10,6 +10,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     env_file:
       - path: .env.local
         required: false
@@ -44,13 +46,42 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-northstar}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/migrations/20260904_initial_schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-northstar}"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  migrate:
+    image: postgres:16-alpine
+    container_name: northstar-migrate
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - path: .env.local
+        required: false
+      - path: .env
+        required: false
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - ./db/migrations:/migrations:ro
+    command:
+      - sh
+      - -c
+      - |
+        for f in /migrations/*.sql; do
+          echo "Applying migration: $$f"
+          psql -v ON_ERROR_STOP=1 \
+            -h db -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-northstar} \
+            -f "$$f" \
+            || exit 1
+        done
+        echo "All migrations applied."
 
 volumes:
   postgres_data:

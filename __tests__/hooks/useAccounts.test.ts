@@ -195,4 +195,44 @@ describe('useAccounts hook', () => {
     expect(result.current.accounts).toEqual([]);
     expect(result.current.error).toContain('Database connection error');
   });
+
+  it('refreshBalances calls POST /api/plaid/refresh-balances then re-fetches accounts', async () => {
+    const mockFetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url === '/api/accounts') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, accounts: [mockAccount1] }),
+        });
+      }
+      if (url === '/api/plaid/refresh-balances' && init?.method === 'POST') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            success: true,
+            itemsRefreshed: 1,
+            accountsUpdated: 1,
+            snapshotsWritten: 1,
+          }),
+        });
+      }
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const { result } = renderHook(() => useAccounts());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.refreshBalances();
+    });
+
+    expect(result.current.isRefreshing).toBe(false);
+    expect(result.current.lastRefreshedAt).not.toBeNull();
+    expect(mockFetch).toHaveBeenCalledWith('/api/plaid/refresh-balances', {
+      method: 'POST',
+    });
+  });
 });

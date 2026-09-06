@@ -101,4 +101,35 @@ describe('ConnectedAccountsList component', () => {
     fireEvent.click(removeButtons[0]);
     expect(handleRemove).toHaveBeenCalledWith('acc_1');
   });
+
+  it('calls onRefreshBalances when refresh button is clicked', () => {
+    const handleRefresh = vi.fn();
+    renderWithProvider(
+      <ConnectedAccountsList accounts={mockAccounts} onRefreshBalances={handleRefresh} />
+    );
+
+    const refreshButton = screen.getByRole('button', { name: /refresh balances/i });
+    fireEvent.click(refreshButton);
+    expect(handleRefresh).toHaveBeenCalled();
+  });
+
+  it('disables refresh button while refreshing', () => {
+    renderWithProvider(
+      <ConnectedAccountsList accounts={mockAccounts} onRefreshBalances={() => {}} isRefreshing />
+    );
+
+    const refreshButton = screen.getByRole('button', { name: /refresh balance/i });
+    expect(refreshButton).toBeDisabled();
+  });
+
+  it('shows the last updated time when provided', () => {
+    renderWithProvider(
+      <ConnectedAccountsList
+        accounts={mockAccounts}
+        lastRefreshedAt="2026-09-06T12:00:00.000Z"
+      />
+    );
+
+    expect(screen.getByText(/Last updated/i)).toBeInTheDocument();
+  });
 });

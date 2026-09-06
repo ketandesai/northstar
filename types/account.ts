@@ -19,4 +19,5 @@ export interface ConnectedAccount {
   balances: AccountBalance;
   institution: BankInstitution;
   connectedAt?: string;
+  updatedAt?: string;
 }

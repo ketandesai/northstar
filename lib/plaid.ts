@@ -1,8 +1,8 @@
 import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from 'plaid';
 
 const plaidClientId = process.env.PLAID_CLIENT_ID || '';
-const plaidSecret = process.env.PLAID_SECRET || '';
 const plaidEnv = (process.env.PLAID_ENV || 'sandbox') as keyof typeof PlaidEnvironments;
+const plaidSecret = plaidEnv === 'sandbox' ? process.env.PLAID_SECRET_SANDBOX : process.env.PLAID_SECRET_PRODUCTION;
 
 export const isPlaidConfigured = Boolean(
   plaidClientId &&

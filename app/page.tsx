@@ -9,7 +9,15 @@ import { PlaidLinkProvider } from '@/components/PlaidLinkProvider';
 import { useAccounts } from '@/hooks/useAccounts';
 
 export default function Home() {
-  const { accounts, loading, addAccounts, removeAccount } = useAccounts();
+  const {
+    accounts,
+    loading,
+    isRefreshing,
+    lastRefreshedAt,
+    addAccounts,
+    removeAccount,
+    refreshBalances,
+  } = useAccounts();
 
   return (
     <PlaidLinkProvider>
@@ -65,6 +73,9 @@ export default function Home() {
           isLoading={loading}
           onRemoveAccount={removeAccount}
           onAccountsAdded={addAccounts}
+          onRefreshBalances={refreshBalances}
+          isRefreshing={isRefreshing}
+          lastRefreshedAt={lastRefreshedAt}
         />
 
         {/* Value Prop Features */}
