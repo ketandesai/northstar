@@ -7,6 +7,7 @@ import {
   mapConnectedAccountToInsert,
 } from '@/types/database';
 import { ConnectedAccount } from '@/types/account';
+import { upsertBalanceSnapshot } from '@/lib/balance-history';
 
 export async function GET() {
   try {
@@ -110,6 +111,15 @@ export async function POST(req: Request) {
         ]
       );
       savedAccounts.push(mapAccountRowToConnectedAccount(inserted[0]));
+
+      await upsertBalanceSnapshot({
+        accountId: row.id,
+        userId: DEFAULT_GUEST_USER_ID,
+        currentBalance: row.current_balance ?? null,
+        availableBalance: row.available_balance ?? null,
+        isoCurrencyCode: row.iso_currency_code || 'USD',
+        source: 'manual',
+      });
     }
 
     return NextResponse.json({

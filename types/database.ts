@@ -233,6 +233,13 @@ export type BalanceHistoryRow = Omit<
 };
 export type BalanceHistoryInsert = Database['public']['Tables']['balance_history']['Insert'];
 
+export interface NetWorthPoint {
+  /** ISO snapshot date (yyyy-mm-dd). */
+  date: string;
+  /** Net worth for that day: positive balances credit/loan subtracted. */
+  netWorth: number;
+}
+
 export const DEFAULT_GUEST_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 /**

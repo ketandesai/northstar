@@ -1,5 +1,6 @@
 import { plaidClient } from './plaid';
 import { db } from './db';
+import { upsertBalanceSnapshot } from './balance-history';
 import { DEFAULT_GUEST_USER_ID } from '@/types/database';
 
 export interface BalanceRefreshSummary {
@@ -38,8 +39,6 @@ export async function refreshBalances(
     [userIds]
   );
   const items = itemsResult.rows;
-
-  const today = new Date().toISOString().slice(0, 10);
 
   for (const item of items) {
     if (!item.access_token) continue;
@@ -89,19 +88,15 @@ export async function refreshBalances(
         continue;
       }
 
-      await db.query(
-        `INSERT INTO balance_history (
-           account_id, user_id, snapshot_date, available_balance, current_balance,
-           iso_currency_code, source
-         )
-         VALUES ($1, $2, $3, $4, $5, $6, 'plaid')
-         ON CONFLICT (account_id, snapshot_date) DO UPDATE SET
-           available_balance = EXCLUDED.available_balance,
-           current_balance = EXCLUDED.current_balance,
-           iso_currency_code = EXCLUDED.iso_currency_code,
-           source = EXCLUDED.source`,
-        [acc.account_id, item.user_id, today, available, current, isoCurrencyCode]
-      );
+      await upsertBalanceSnapshot({
+        accountId: acc.account_id,
+        userId: item.user_id,
+        currentBalance: current,
+        availableBalance: available,
+        isoCurrencyCode,
+        source: 'plaid',
+        client: db,
+      });
 
       summary.accountsUpdated += 1;
       summary.snapshotsWritten += 1;

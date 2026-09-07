@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { plaidClient, isPlaidConfigured } from '@/lib/plaid';
 import { db } from '@/lib/db';
 import { DEFAULT_GUEST_USER_ID, mapConnectedAccountToInsert } from '@/types/database';
+import { upsertBalanceSnapshot } from '@/lib/balance-history';
 
 export async function POST(req: Request) {
   try {
@@ -136,6 +137,16 @@ export async function POST(req: Request) {
             row.updated_at,
           ]
         );
+
+        await upsertBalanceSnapshot({
+          accountId: row.id,
+          userId: DEFAULT_GUEST_USER_ID,
+          currentBalance: row.current_balance ?? null,
+          availableBalance: row.available_balance ?? null,
+          isoCurrencyCode: row.iso_currency_code || 'USD',
+          source: 'plaid',
+          client: dbClient,
+        });
       }
 
       await dbClient.query('COMMIT');

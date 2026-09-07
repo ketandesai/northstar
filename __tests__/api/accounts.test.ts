@@ -60,7 +60,8 @@ describe('/api/accounts', () => {
     const queryMock = vi
       .spyOn(dbLib, 'query')
       .mockResolvedValueOnce([] as never[])
-      .mockResolvedValueOnce(mockDbAccounts as never[]);
+      .mockResolvedValueOnce(mockDbAccounts as never[])
+      .mockResolvedValueOnce([] as never[]);
 
     const req = new Request('http://localhost:3000/api/accounts', {
       method: 'POST',
@@ -105,6 +106,12 @@ describe('/api/accounts', () => {
     expect(queryMock).toHaveBeenNthCalledWith(
       2,
       expect.stringContaining('INSERT INTO accounts'),
+      expect.any(Array)
+    );
+    // Third call seeds the balance-history snapshot for today
+    expect(queryMock).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('INSERT INTO balance_history'),
       expect.any(Array)
     );
   });

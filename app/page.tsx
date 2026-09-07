@@ -4,9 +4,11 @@ import React from 'react';
 import { Compass, ShieldCheck, Zap, RefreshCw, Landmark } from 'lucide-react';
 import AddAccountButton from '@/components/AddAccountButton';
 import ConnectedAccountsList from '@/components/ConnectedAccountsList';
+import NetWorthChart from '@/components/NetWorthChart';
 import PlaidSetupBanner from '@/components/PlaidSetupBanner';
 import { PlaidLinkProvider } from '@/components/PlaidLinkProvider';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useNetWorth } from '@/hooks/useNetWorth';
 
 export default function Home() {
   const {
@@ -18,6 +20,9 @@ export default function Home() {
     removeAccount,
     refreshBalances,
   } = useAccounts();
+
+  const { points: netWorthPoints, loading: netWorthLoading, error: netWorthError } =
+    useNetWorth(accounts.map((a) => a.id));
 
   return (
     <PlaidLinkProvider>
@@ -77,6 +82,15 @@ export default function Home() {
           isRefreshing={isRefreshing}
           lastRefreshedAt={lastRefreshedAt}
         />
+
+        {/* Net Worth Trend Section */}
+        <div className="mt-8">
+          <NetWorthChart
+            points={netWorthPoints}
+            loading={netWorthLoading}
+            error={netWorthError}
+          />
+        </div>
 
         {/* Value Prop Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pt-12 border-t border-zinc-200 dark:border-zinc-800">
