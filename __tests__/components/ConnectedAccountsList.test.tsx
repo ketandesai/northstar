@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import ConnectedAccountsList from '@/components/ConnectedAccountsList';
 import { PlaidLinkProvider } from '@/components/PlaidLinkProvider';
 import { ConnectedAccount } from '@/types/account';
@@ -68,7 +68,7 @@ describe('ConnectedAccountsList component', () => {
 
   it('renders empty state when no accounts are connected', () => {
     renderWithProvider(<ConnectedAccountsList accounts={[]} />);
-    expect(screen.getByText(/no bank accounts connected yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no bank accounts or assets yet/i)).toBeInTheDocument();
   });
 
   it('renders linked accounts with names, masks, and balances', () => {
@@ -86,7 +86,7 @@ describe('ConnectedAccountsList component', () => {
     renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
     // 2500 + 15000 = $17,500.00
     expect(screen.getByText('$17,500.00')).toBeInTheDocument();
-    expect(screen.getByText(/Across 2 linked accounts/i)).toBeInTheDocument();
+    expect(screen.getByText(/Across 2 accounts & assets/i)).toBeInTheDocument();
   });
 
   it('calls onRemoveAccount when delete button is clicked', () => {
@@ -131,5 +131,113 @@ describe('ConnectedAccountsList component', () => {
     );
 
     expect(screen.getByText(/Last updated/i)).toBeInTheDocument();
+  });
+
+  describe('manual assets', () => {
+    const mockAsset: ConnectedAccount = {
+      id: 'asset_home_1',
+      name: 'Primary Home',
+      officialName: 'Primary Home',
+      mask: '',
+      type: 'asset',
+      subtype: 'home',
+      balances: {
+        available: null,
+        current: 500000,
+        isoCurrencyCode: 'USD',
+      },
+      institution: {
+        id: 'manual_asset',
+        name: 'Home',
+      },
+      connectedAt: '2026-09-08T12:00:00.000Z',
+    };
+
+    it('renders assets in the Other Assets section with their value', () => {
+      renderWithProvider(
+        <ConnectedAccountsList accounts={[...mockAccounts, mockAsset]} />
+      );
+
+      expect(screen.getByText('Other Assets')).toBeInTheDocument();
+      expect(screen.getByText('Primary Home')).toBeInTheDocument();
+      expect(screen.getByText('$500,000.00')).toBeInTheDocument();
+    });
+
+    it('includes asset values in the total net balance', () => {
+      renderWithProvider(
+        <ConnectedAccountsList accounts={[...mockAccounts, mockAsset]} />
+      );
+      // 2500 + 15000 + 500000 = $517,500.00
+      expect(screen.getByText('$517,500.00')).toBeInTheDocument();
+    });
+
+    it('does not render a bank mask for assets', () => {
+      renderWithProvider(
+        <ConnectedAccountsList accounts={[...mockAccounts, mockAsset]} />
+      );
+
+      // Only the two bank accounts show masks; the asset row must not.
+      expect(screen.getAllByText(/•••• \d/)).toHaveLength(2);
+    });
+
+    it('adds a new asset through the add asset modal', async () => {
+      const handleAdd = vi.fn();
+      renderWithProvider(<ConnectedAccountsList accounts={[]} onAccountsAdded={handleAdd} />);
+
+      fireEvent.click(screen.getByRole('button', { name: /add asset/i }));
+
+      const dialog = screen.getByRole('dialog');
+      const { getByLabelText: labelIn, getByRole: roleIn } = within(dialog);
+
+      fireEvent.change(labelIn(/asset name/i), {
+        target: { value: 'Tesla Model 3' },
+      });
+      fireEvent.change(labelIn(/category/i), {
+        target: { value: 'car' },
+      });
+      fireEvent.change(labelIn(/current value/i), {
+        target: { value: '42000' },
+      });
+
+      fireEvent.click(roleIn('button', { name: /add asset/i }));
+
+      expect(handleAdd).toHaveBeenCalledTimes(1);
+      expect(handleAdd.mock.calls[0][0]).toHaveLength(1);
+      const saved = handleAdd.mock.calls[0][0][0];
+      expect(saved).toMatchObject({
+        name: 'Tesla Model 3',
+        type: 'asset',
+        subtype: 'car',
+        balances: { current: 42000, isoCurrencyCode: 'USD' },
+      });
+      expect(saved.id).toMatch(/^asset_/);
+    });
+
+    it('edits an asset value through the edit modal', () => {
+      const handleUpdate = vi.fn().mockResolvedValue(undefined);
+      renderWithProvider(
+        <ConnectedAccountsList
+          accounts={[mockAsset]}
+          onUpdateAccount={handleUpdate}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /edit asset/i }));
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByLabelText(/asset name/i)).toHaveValue('Primary Home');
+
+      fireEvent.change(screen.getByLabelText(/current value/i), {
+        target: { value: '525000' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+      expect(handleUpdate).toHaveBeenCalledTimes(1);
+      expect(handleUpdate).toHaveBeenCalledWith('asset_home_1', {
+        name: 'Primary Home',
+        subtype: 'home',
+        currentBalance: 525000,
+      });
+    });
   });
 });

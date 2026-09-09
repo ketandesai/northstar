@@ -196,6 +196,52 @@ describe('useAccounts hook', () => {
     expect(result.current.error).toContain('Database connection error');
   });
 
+  it('updates an account via PATCH /api/accounts/:id and reconciles state', async () => {
+    const updatedAccount = {
+      ...mockAccount1,
+      name: 'Checking Account (Renamed)',
+      balances: { ...mockAccount1.balances, current: 999 },
+    };
+    const mockFetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url === '/api/accounts' && (!init || init.method === undefined)) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, accounts: [mockAccount1] }),
+        });
+      }
+      if (url === '/api/accounts/acc_1' && init?.method === 'PATCH') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true, account: updatedAccount, updated: ['current_balance'] }),
+        });
+      }
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const { result } = renderHook(() => useAccounts());
+
+    await waitFor(() => {
+      expect(result.current.accounts).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await result.current.updateAccount('acc_1', { currentBalance: 999, name: 'Checking Account (Renamed)' });
+    });
+
+    expect(result.current.accounts[0].name).toBe('Checking Account (Renamed)');
+    expect(result.current.accounts[0].balances.current).toBe(999);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/accounts/acc_1',
+      expect.objectContaining({
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentBalance: 999, name: 'Checking Account (Renamed)' }),
+      })
+    );
+  });
+
   it('refreshBalances calls POST /api/plaid/refresh-balances then re-fetches accounts', async () => {
     const mockFetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (url === '/api/accounts') {

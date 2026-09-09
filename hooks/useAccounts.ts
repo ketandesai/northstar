@@ -148,6 +148,77 @@ export function useAccounts() {
     []
   );
 
+  // Update an account (e.g. revalue a manual asset) in PostgreSQL
+  const updateAccount = useCallback(
+    async (
+      accountId: string,
+      patch: {
+        name?: string;
+        subtype?: string;
+        currentBalance?: number | null;
+        isoCurrencyCode?: string;
+      }
+    ) => {
+      if (!accountId) return;
+
+      // Optimistic update
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === accountId
+            ? {
+                ...acc,
+                ...(patch.name !== undefined ? { name: patch.name } : {}),
+                ...(patch.subtype !== undefined ? { subtype: patch.subtype } : {}),
+                ...(patch.isoCurrencyCode !== undefined
+                  ? {
+                      balances: {
+                        ...acc.balances,
+                        isoCurrencyCode: patch.isoCurrencyCode,
+                      },
+                    }
+                  : {}),
+                ...(patch.currentBalance !== undefined
+                  ? {
+                      balances: {
+                        ...acc.balances,
+                        current: patch.currentBalance,
+                        available: null,
+                      },
+                    }
+                  : {}),
+                updatedAt: new Date().toISOString(),
+              }
+            : acc
+        )
+      );
+
+      try {
+        const res = await fetch(`/api/accounts/${encodeURIComponent(accountId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to update account in database');
+        }
+
+        const data = await res.json();
+        if (data?.account) {
+          setAccounts((prev) =>
+            prev.map((acc) => (acc.id === accountId ? data.account : acc))
+          );
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to update account';
+        console.error('Error updating account in PostgreSQL:', msg);
+        setError(msg);
+      }
+    },
+    []
+  );
+
   // Remove account by ID from PostgreSQL
   const removeAccount = useCallback(async (accountId: string) => {
     if (!accountId) return;
@@ -178,6 +249,7 @@ export function useAccounts() {
     isRefreshing,
     lastRefreshedAt,
     addAccounts,
+    updateAccount,
     removeAccount,
     refresh: fetchAccounts,
     refreshBalances,

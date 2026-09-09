@@ -17,12 +17,15 @@ export default function Home() {
     isRefreshing,
     lastRefreshedAt,
     addAccounts,
+    updateAccount,
     removeAccount,
     refreshBalances,
   } = useAccounts();
 
   const { points: netWorthPoints, loading: netWorthLoading, error: netWorthError } =
-    useNetWorth(accounts.map((a) => a.id));
+    useNetWorth(
+      accounts.map((a) => `${a.id}@${a.updatedAt ?? ''}`)
+    );
 
   return (
     <PlaidLinkProvider>
@@ -59,10 +62,11 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Bank Accounts & Financial Overview
+              Financial Overview
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Connect your bank accounts securely with Plaid to monitor balances and track transactions.
+              Connect your bank accounts securely with Plaid, and add manual assets like your home,
+              car, and private equity to track your full net worth.
             </p>
           </div>
 
@@ -78,6 +82,7 @@ export default function Home() {
           isLoading={loading}
           onRemoveAccount={removeAccount}
           onAccountsAdded={addAccounts}
+          onUpdateAccount={updateAccount}
           onRefreshBalances={refreshBalances}
           isRefreshing={isRefreshing}
           lastRefreshedAt={lastRefreshedAt}
