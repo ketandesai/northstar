@@ -58,24 +58,6 @@ export default function Home() {
         {/* Plaid Config Notice (if keys missing) */}
         <PlaidSetupBanner onLoadDemoAccount={addAccounts} />
 
-        {/* Dashboard Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Financial Overview
-            </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Connect your bank accounts securely with Plaid, and add manual assets like your home,
-              car, and private equity to track your full net worth.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>256-bit Bank-grade Encryption</span>
-          </div>
-        </div>
-
         {/* Accounts List Section */}
         <ConnectedAccountsList
           accounts={accounts}
