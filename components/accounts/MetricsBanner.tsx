@@ -36,35 +36,12 @@ export default function MetricsBanner({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <MetricCard
-        label="Total Net Balance"
+        label="Total Net Worth"
         value={formatCurrency(totalBalance)}
         subtext={`Across ${trackedCount} ${trackedCount === 1 ? 'account & asset' : 'accounts & assets'}`}
       />
 
-      <MetricCard
-        label="Connected Institutions"
-        value={institutionCount}
-        subtext="Secured via Plaid Link"
-      />
-
-      <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-          Connection Status
-        </span>
-        <div className="mt-2 flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-          <CheckCircle2 className="w-4 h-4" />
-          <span>Active & Syncing</span>
-        </div>
-        {lastRefreshedAt ? (
-          <span className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 block">
-            Last updated {formatTimestamp(lastRefreshedAt)}
-          </span>
-        ) : (
-          <span className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 block">
-            Syncs automatically via Plaid
-          </span>
-        )}
-      </div>
+      
     </div>
   );
 }
