@@ -133,6 +133,40 @@ describe('ConnectedAccountsList component', () => {
     expect(screen.getByText(/Last updated/i)).toBeInTheDocument();
   });
 
+  it('renders section action buttons in Linked Accounts and Other Assets headers', () => {
+    renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
+
+    const linkedSectionHeader = screen.getByText('Linked Accounts').closest('div')!.parentElement!;
+    expect(
+      within(linkedSectionHeader).getByRole('button', { name: /add account/i })
+    ).toBeInTheDocument();
+
+    const assetsSectionHeader = screen.getByText('Other Assets').closest('div')!.parentElement!;
+    expect(
+      within(assetsSectionHeader).getByRole('button', { name: /add asset/i })
+    ).toBeInTheDocument();
+  });
+
+  it('opens add asset modal when clicking Add Asset in Other Assets section', () => {
+    renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
+
+    const assetsSectionHeader = screen.getByText('Other Assets').closest('div')!.parentElement!;
+    const addAssetBtn = within(assetsSectionHeader).getByRole('button', { name: /add asset/i });
+    fireEvent.click(addAssetBtn);
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('triggers Plaid open when clicking Add Account in Linked Accounts section', () => {
+    renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
+
+    const linkedSectionHeader = screen.getByText('Linked Accounts').closest('div')!.parentElement!;
+    const addAccountBtn = within(linkedSectionHeader).getByRole('button', { name: /add account/i });
+    fireEvent.click(addAccountBtn);
+
+    expect(mockOpen).toHaveBeenCalled();
+  });
+
   describe('manual assets', () => {
     const mockAsset: ConnectedAccount = {
       id: 'asset_home_1',

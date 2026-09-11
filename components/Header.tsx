@@ -2,14 +2,8 @@
 
 import React from 'react';
 import { Compass } from 'lucide-react';
-import { ConnectedAccount } from '@/types/account';
-import AddAccountButton from './AddAccountButton';
 
-interface HeaderProps {
-  onAccountsAdded?: (accounts: ConnectedAccount[]) => void;
-}
-
-export default function Header({ onAccountsAdded }: HeaderProps) {
+export default function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -25,10 +19,6 @@ export default function Header({ onAccountsAdded }: HeaderProps) {
               </span>
             </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <AddAccountButton onAccountsAdded={onAccountsAdded} variant="primary" />
         </div>
       </div>
     </header>

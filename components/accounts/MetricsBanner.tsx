@@ -1,7 +1,6 @@
 import React from 'react';
-import { CheckCircle2, Loader2, RefreshCw, Plus, Package } from 'lucide-react';
-import { ConnectedAccount } from '@/types/account';
-import AddAccountButton from '../AddAccountButton';
+import { CheckCircle2, RefreshCw } from 'lucide-react';
+import Button from '../ui/Button';
 import { formatCurrency, formatTimestamp } from './format';
 
 interface MetricsBannerProps {
@@ -11,8 +10,6 @@ interface MetricsBannerProps {
   lastRefreshedAt?: string | null;
   isRefreshing?: boolean;
   onRefreshBalances?: () => void;
-  onAccountsAdded?: (accounts: ConnectedAccount[]) => void;
-  onAddAsset: () => void;
 }
 
 interface MetricCardProps {
@@ -40,8 +37,6 @@ export default function MetricsBanner({
   lastRefreshedAt = null,
   isRefreshing = false,
   onRefreshBalances,
-  onAccountsAdded,
-  onAddAsset,
 }: MetricsBannerProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -72,33 +67,19 @@ export default function MetricsBanner({
             </span>
           )}
         </div>
-        <div className="pt-2 space-y-2">
-          <button
-            type="button"
+        <div className="pt-3">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onRefreshBalances}
             disabled={isRefreshing || !onRefreshBalances}
-            className="flex items-center justify-center gap-1.5 w-full px-3 py-2 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            loading={isRefreshing}
+            icon={<RefreshCw className="w-3.5 h-3.5" />}
+            className="w-full text-xs"
             aria-label="Refresh balances"
           >
-            {isRefreshing ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3.5 h-3.5" />
-            )}
             {isRefreshing ? 'Refreshing...' : 'Refresh balances'}
-          </button>
-          <div className="grid grid-cols-2 gap-2">
-            <AddAccountButton onAccountsAdded={onAccountsAdded} variant="compact" />
-            <button
-              type="button"
-              onClick={onAddAsset}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium border border-blue-200 dark:border-blue-800/60 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-900/60 transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <Package className="w-3.5 h-3.5 opacity-80" />
-              <span>Add Asset</span>
-            </button>
-          </div>
+          </Button>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { ConnectedAccount, isManualAsset, getAssetCategoryLabel } from '@/types/account';
 import { formatCurrency } from './format';
 import { Pencil, Trash2, Landmark, CreditCard, PiggyBank, Wallet, Home, Car, Briefcase, TrendingUp, Package } from 'lucide-react';
+import Button from '../ui/Button';
 
 interface AccountRowProps {
   account: ConnectedAccount;
@@ -85,26 +86,24 @@ export default function AccountRow({ account, onEditAsset, onRemoveAccount }: Ac
         {((onEditAsset && isAsset) || onRemoveAccount) && (
           <div className="flex items-center gap-1">
             {isAsset && onEditAsset && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                hoverAccent="blue"
                 onClick={() => onEditAsset(account)}
-                className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg transition-colors cursor-pointer"
+                icon={<Pencil className="w-4 h-4" />}
                 title="Edit Asset"
                 aria-label="Edit asset"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
+              />
             )}
             {onRemoveAccount && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                hoverAccent="rose"
                 onClick={() => onRemoveAccount(account.id)}
-                className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                icon={<Trash2 className="w-4 h-4" />}
                 title={isAsset ? 'Remove Asset' : 'Disconnect Account'}
                 aria-label={isAsset ? 'Remove asset' : 'Disconnect Account'}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              />
             )}
           </div>
         )}

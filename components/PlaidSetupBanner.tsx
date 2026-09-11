@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ExternalLink, KeyRound, Sparkles } from 'lucide-react';
 import { ConnectedAccount } from '@/types/account';
+import Button from './ui/Button';
 
 interface PlaidSetupBannerProps {
   onLoadDemoAccount?: (accounts: ConnectedAccount[]) => void;
@@ -106,14 +107,14 @@ export default function PlaidSetupBanner({ onLoadDemoAccount }: PlaidSetupBanner
 
         <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
           {onLoadDemoAccount && (
-            <button
-              type="button"
+            <Button
+              variant="amber"
+              size="sm"
               onClick={handleAddDemoData}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-200/80 dark:bg-amber-900/80 hover:bg-amber-300 text-amber-950 dark:text-amber-100 transition-colors cursor-pointer"
+              icon={<Sparkles className="w-3.5 h-3.5" />}
             >
-              <Sparkles className="w-3.5 h-3.5" />
               Preview Demo Accounts
-            </button>
+            </Button>
           )}
           <a
             href="https://dashboard.plaid.com/team/keys"

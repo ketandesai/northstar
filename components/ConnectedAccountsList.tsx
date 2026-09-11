@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Plus, Package } from 'lucide-react';
 import { ConnectedAccount, isManualAsset } from '@/types/account';
+import AddAccountButton from './AddAccountButton';
 import AddAssetModal from './AddAssetModal';
+import Button from './ui/Button';
 import AccountRow from './accounts/AccountRow';
 import AccountsSection from './accounts/AccountsSection';
 import MetricsBanner from './accounts/MetricsBanner';
@@ -105,8 +108,6 @@ export default function ConnectedAccountsList({
         lastRefreshedAt={lastRefreshedAt}
         isRefreshing={isRefreshing}
         onRefreshBalances={onRefreshBalances}
-        onAccountsAdded={onAccountsAdded}
-        onAddAsset={openAddAsset}
       />
 
       <AccountsSection
@@ -115,6 +116,13 @@ export default function ConnectedAccountsList({
         singular="account"
         plural="accounts"
         emptyMessage={'No bank accounts connected yet. Use \u201CAdd Account\u201D to link one via Plaid.'}
+        action={
+          <AddAccountButton
+            onAccountsAdded={onAccountsAdded}
+            variant="compact"
+            size="sm"
+          />
+        }
       >
         {linkedAccounts.map(renderAccountRow)}
       </AccountsSection>
@@ -125,6 +133,21 @@ export default function ConnectedAccountsList({
         singular="asset"
         plural="assets"
         emptyMessage="Track your home, car, private equity, and other assets to see your full net worth."
+        action={
+          <Button
+            variant="compact"
+            size="sm"
+            onClick={openAddAsset}
+            icon={
+              <>
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <Package className="w-3.5 h-3.5 opacity-80" />
+              </>
+            }
+          >
+            Add Asset
+          </Button>
+        }
       >
         {manualAssets.map(renderAccountRow)}
       </AccountsSection>

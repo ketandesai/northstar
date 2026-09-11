@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertCircle, Loader2, X } from 'lucide-react';
+import { AlertCircle, X } from 'lucide-react';
+import Button from './ui/Button';
 import {
   ASSET_CATEGORIES,
   AssetCategory,
@@ -115,15 +116,14 @@ export default function AddAssetModal({
               Track assets like your home, car, and private equity.
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleClose}
             disabled={saving}
-            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50"
+            icon={<X className="w-4 h-4" />}
             aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          />
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
@@ -183,22 +183,21 @@ export default function AddAssetModal({
           )}
 
           <div className="flex items-center justify-end gap-3 pt-1">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={handleClose}
               disabled={saving}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              loading={saving}
             >
-              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Asset'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Landmark, Plus, Package } from 'lucide-react';
 import { ConnectedAccount } from '@/types/account';
 import AddAccountButton from '../AddAccountButton';
+import Button from '../ui/Button';
 
 interface EmptyStateProps {
   onAccountsAdded?: (accounts: ConnectedAccount[]) => void;
@@ -23,15 +24,19 @@ export default function EmptyState({ onAccountsAdded, onAddAsset }: EmptyStatePr
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <AddAccountButton onAccountsAdded={onAccountsAdded} variant="primary" />
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="lg"
           onClick={onAddAsset}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-base font-medium bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white shadow-sm transition-all cursor-pointer"
+          icon={
+            <>
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <Package className="w-4 h-4 opacity-80" />
+            </>
+          }
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <Package className="w-4 h-4 opacity-80" />
-          <span>Add Asset</span>
-        </button>
+          Add Asset
+        </Button>
       </div>
     </div>
   );

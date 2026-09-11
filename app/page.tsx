@@ -31,7 +31,7 @@ export default function Home() {
     <PlaidLinkProvider>
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans">
       {/* Top Navigation */}
-      <Header onAccountsAdded={addAccounts} />
+      <Header />
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
