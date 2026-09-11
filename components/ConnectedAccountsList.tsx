@@ -20,11 +20,13 @@ interface ConnectedAccountsListProps {
     accountId: string,
     patch: {
       name?: string;
+      officialName?: string;
       subtype?: string;
       currentBalance?: number | null;
       isoCurrencyCode?: string;
     }
   ) => void | Promise<void>;
+  onRefreshHomeValue?: (accountId: string) => void | Promise<void>;
   onRefreshBalances?: () => void;
   isRefreshing?: boolean;
   lastRefreshedAt?: string | null;
@@ -36,6 +38,7 @@ export default function ConnectedAccountsList({
   onRemoveAccount,
   onAccountsAdded,
   onUpdateAccount,
+  onRefreshHomeValue,
   onRefreshBalances,
   isRefreshing = false,
   lastRefreshedAt = null,
@@ -96,6 +99,7 @@ export default function ConnectedAccountsList({
       account={account}
       onEditAsset={onUpdateAccount ? openEditAsset : undefined}
       onRemoveAccount={onRemoveAccount}
+      onRefreshHomeValue={onRefreshHomeValue}
     />
   );
 

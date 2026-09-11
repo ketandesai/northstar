@@ -1,13 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ConnectedAccount, isManualAsset, getAssetCategoryLabel } from '@/types/account';
 import { formatCurrency } from './format';
-import { Pencil, Trash2, Landmark, CreditCard, PiggyBank, Wallet, Home, Car, Briefcase, TrendingUp, Package } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  Landmark,
+  CreditCard,
+  PiggyBank,
+  Wallet,
+  Home,
+  Car,
+  Briefcase,
+  TrendingUp,
+  Package,
+  RefreshCw,
+} from 'lucide-react';
 import Button from '../ui/Button';
 
 interface AccountRowProps {
   account: ConnectedAccount;
   onEditAsset?: (account: ConnectedAccount) => void;
   onRemoveAccount?: (accountId: string) => void;
+  onRefreshHomeValue?: (accountId: string) => void | Promise<void>;
 }
 
 const getBankAccountIcon = (type: string, subtype: string | null) => {
@@ -39,10 +53,26 @@ const getAssetIcon = (subtype: string | null) => {
   }
 };
 
-export default function AccountRow({ account, onEditAsset, onRemoveAccount }: AccountRowProps) {
+export default function AccountRow({
+  account,
+  onEditAsset,
+  onRemoveAccount,
+  onRefreshHomeValue,
+}: AccountRowProps) {
   const isAsset = isManualAsset(account);
   const currentBal = account.balances.current ?? account.balances.available;
   const availableBal = account.balances.available;
+  const [refreshingHome, setRefreshingHome] = useState(false);
+
+  const handleRefreshHome = async () => {
+    if (!onRefreshHomeValue || refreshingHome) return;
+    setRefreshingHome(true);
+    try {
+      await onRefreshHomeValue(account.id);
+    } finally {
+      setRefreshingHome(false);
+    }
+  };
 
   return (
     <div className="p-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30 transition-colors">
@@ -63,6 +93,11 @@ export default function AccountRow({ account, onEditAsset, onRemoveAccount }: Ac
               </span>
             )}
           </div>
+          {isAsset && account.subtype === 'home' && account.officialName && account.officialName !== account.name && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate max-w-xs sm:max-w-md">
+              {account.officialName}
+            </p>
+          )}
           <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             <span>{isAsset ? getAssetCategoryLabel(account.subtype) : account.institution.name}</span>
             <span>•</span>
@@ -83,8 +118,20 @@ export default function AccountRow({ account, onEditAsset, onRemoveAccount }: Ac
           )}
         </div>
 
-        {((onEditAsset && isAsset) || onRemoveAccount) && (
+        {((onEditAsset && isAsset) || onRemoveAccount || (isAsset && account.subtype === 'home' && onRefreshHomeValue)) && (
           <div className="flex items-center gap-1">
+            {isAsset && account.subtype === 'home' && onRefreshHomeValue && (
+              <Button
+                variant="ghost"
+                hoverAccent="blue"
+                onClick={handleRefreshHome}
+                disabled={refreshingHome}
+                loading={refreshingHome}
+                icon={<RefreshCw className={`w-4 h-4 ${refreshingHome ? 'animate-spin' : ''}`} />}
+                title="Refresh Home Valuation"
+                aria-label="Refresh home valuation"
+              />
+            )}
             {isAsset && onEditAsset && (
               <Button
                 variant="ghost"

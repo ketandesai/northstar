@@ -61,6 +61,23 @@ export interface ManualAssetInput {
   subtype: AssetCategory;
   value: number;
   isoCurrencyCode?: string;
+  officialName?: string;
+}
+
+export interface HomeValuationResult {
+  address: string;
+  formattedAddress?: string;
+  estimatedValue: number;
+  priceRangeLow?: number | null;
+  priceRangeHigh?: number | null;
+  currency: string;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  squareFootage?: number | null;
+  propertyType?: string | null;
+  valuationDate: string;
+  provider: 'rentcast' | 'mock';
+  isSimulated: boolean;
 }
 
 /**
@@ -76,7 +93,7 @@ export function buildManualAsset(input: ManualAssetInput): ConnectedAccount {
   return {
     id: `asset_${id}`,
     name: input.name,
-    officialName: input.name,
+    officialName: input.officialName || input.name,
     mask: '',
     type: MANUAL_ASSET_TYPE,
     subtype: input.subtype,
@@ -93,3 +110,4 @@ export function buildManualAsset(input: ManualAssetInput): ConnectedAccount {
     updatedAt: new Date().toISOString(),
   };
 }
+

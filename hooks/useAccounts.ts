@@ -154,6 +154,7 @@ export function useAccounts() {
       accountId: string,
       patch: {
         name?: string;
+        officialName?: string;
         subtype?: string;
         currentBalance?: number | null;
         isoCurrencyCode?: string;
@@ -168,6 +169,7 @@ export function useAccounts() {
             ? {
                 ...acc,
                 ...(patch.name !== undefined ? { name: patch.name } : {}),
+                ...(patch.officialName !== undefined ? { officialName: patch.officialName } : {}),
                 ...(patch.subtype !== undefined ? { subtype: patch.subtype } : {}),
                 ...(patch.isoCurrencyCode !== undefined
                   ? {
@@ -219,6 +221,37 @@ export function useAccounts() {
     []
   );
 
+  // Re-fetch valuation for a home asset and update its current balance
+  const refreshHomeValuation = useCallback(
+    async (accountId: string) => {
+      const target = accounts.find((a) => a.id === accountId);
+      if (!target) return;
+      const address = target.officialName || target.name;
+      if (!address) return;
+
+      try {
+        const res = await fetch(`/api/valuation/home?address=${encodeURIComponent(address)}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to refresh home valuation');
+        }
+        const data = await res.json();
+        if (data?.valuation?.estimatedValue) {
+          await updateAccount(accountId, {
+            currentBalance: data.valuation.estimatedValue,
+            officialName: data.valuation.formattedAddress || address,
+          });
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to refresh home valuation';
+        console.error('Error refreshing home valuation:', msg);
+        setError(msg);
+        throw err;
+      }
+    },
+    [accounts, updateAccount]
+  );
+
   // Remove account by ID from PostgreSQL
   const removeAccount = useCallback(async (accountId: string) => {
     if (!accountId) return;
@@ -250,6 +283,7 @@ export function useAccounts() {
     lastRefreshedAt,
     addAccounts,
     updateAccount,
+    refreshHomeValuation,
     removeAccount,
     refresh: fetchAccounts,
     refreshBalances,

@@ -273,5 +273,43 @@ describe('ConnectedAccountsList component', () => {
         currentBalance: 525000,
       });
     });
+
+    it('displays property address under the home asset name', () => {
+      const homeWithAddress: ConnectedAccount = {
+        ...mockAsset,
+        id: 'asset_home_with_addr',
+        name: 'My Suburban Home',
+        officialName: '742 Evergreen Terrace, Springfield, OR',
+      };
+
+      renderWithProvider(
+        <ConnectedAccountsList accounts={[homeWithAddress]} />
+      );
+
+      expect(screen.getByText('My Suburban Home')).toBeInTheDocument();
+      expect(
+        screen.getByText('742 Evergreen Terrace, Springfield, OR')
+      ).toBeInTheDocument();
+    });
+
+    it('triggers onRefreshHomeValue when refresh valuation button is clicked', () => {
+      const handleRefresh = vi.fn().mockResolvedValue(undefined);
+      renderWithProvider(
+        <ConnectedAccountsList
+          accounts={[mockAsset]}
+          onRefreshHomeValue={handleRefresh}
+        />
+      );
+
+      const refreshButton = screen.getByRole('button', {
+        name: /refresh home valuation/i,
+      });
+      expect(refreshButton).toBeInTheDocument();
+      fireEvent.click(refreshButton);
+
+      expect(handleRefresh).toHaveBeenCalledTimes(1);
+      expect(handleRefresh).toHaveBeenCalledWith('asset_home_1');
+    });
   });
 });
+

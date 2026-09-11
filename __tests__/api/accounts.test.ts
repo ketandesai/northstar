@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET, POST } from '@/app/api/accounts/route';
 import { DELETE, PATCH } from '@/app/api/accounts/[id]/route';
 import * as dbLib from '@/lib/db';
+import { DEFAULT_GUEST_USER_ID } from '@/types/database';
 
 describe('/api/accounts', () => {
   beforeEach(() => {
@@ -221,4 +222,49 @@ describe('/api/accounts', () => {
 
     expect(res.status).toBe(404);
   });
+
+  it('PATCH /api/accounts/[id] updates officialName (property address)', async () => {
+    const updatedRow = {
+      id: 'asset_home_1',
+      user_id: DEFAULT_GUEST_USER_ID,
+      item_id: null,
+      name: 'Primary Residence',
+      official_name: '742 Evergreen Terrace, Springfield, OR',
+      mask: null,
+      type: 'asset',
+      subtype: 'home',
+      available_balance: null,
+      current_balance: '600000.00',
+      iso_currency_code: 'USD',
+      institution_id: 'manual_asset',
+      institution_name: 'Home',
+      connected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    vi.spyOn(dbLib, 'query')
+      .mockResolvedValueOnce([updatedRow] as never[])
+      .mockResolvedValueOnce([] as never[]);
+
+    const req = new Request('http://localhost:3000/api/accounts/asset_home_1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        officialName: '742 Evergreen Terrace, Springfield, OR',
+        currentBalance: 600000,
+      }),
+    });
+
+    const res = await PATCH(req, {
+      params: Promise.resolve({ id: 'asset_home_1' }),
+    });
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.account.officialName).toBe('742 Evergreen Terrace, Springfield, OR');
+    expect(data.updated).toContain('official_name');
+    expect(data.updated).toContain('current_balance');
+  });
 });
+

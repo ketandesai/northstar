@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Zap, RefreshCw, Landmark } from 'lucide-react';
 import Header from '@/components/Header';
 import ConnectedAccountsList from '@/components/ConnectedAccountsList';
 import NetWorthChart from '@/components/NetWorthChart';
@@ -18,6 +17,7 @@ export default function Home() {
     lastRefreshedAt,
     addAccounts,
     updateAccount,
+    refreshHomeValuation,
     removeAccount,
     refreshBalances,
   } = useAccounts();
@@ -45,6 +45,7 @@ export default function Home() {
           onRemoveAccount={removeAccount}
           onAccountsAdded={addAccounts}
           onUpdateAccount={updateAccount}
+          onRefreshHomeValue={refreshHomeValuation}
           onRefreshBalances={refreshBalances}
           isRefreshing={isRefreshing}
           lastRefreshedAt={lastRefreshedAt}
