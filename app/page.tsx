@@ -5,6 +5,7 @@ import { Zap, RefreshCw, Landmark } from 'lucide-react';
 import Header from '@/components/Header';
 import ConnectedAccountsList from '@/components/ConnectedAccountsList';
 import NetWorthChart from '@/components/NetWorthChart';
+import AllocationCard from '@/components/AllocationCard';
 import PlaidSetupBanner from '@/components/PlaidSetupBanner';
 import { PlaidLinkProvider } from '@/components/PlaidLinkProvider';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -50,13 +51,14 @@ export default function Home() {
           lastRefreshedAt={lastRefreshedAt}
         />
 
-        {/* Net Worth Trend Section */}
-        <div className="mt-8">
+        {/* Net Worth Trend + Asset Allocation */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <NetWorthChart
             points={netWorthPoints}
             loading={netWorthLoading}
             error={netWorthError}
           />
+          <AllocationCard accounts={accounts} loading={loading} />
         </div>
       </main>
     </div>
