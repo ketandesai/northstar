@@ -28,6 +28,7 @@ export async function PATCH(
 
     const body = await req.json().catch(() => ({}));
     const name = typeof body.name === 'string' ? body.name : undefined;
+    const type = typeof body.type === 'string' ? body.type : undefined;
     const subtype = typeof body.subtype === 'string' ? body.subtype : undefined;
     const isoCurrencyCode =
       typeof body.isoCurrencyCode === 'string' ? body.isoCurrencyCode : undefined;
@@ -36,7 +37,13 @@ export async function PATCH(
         ? null
         : Number(body.currentBalance);
 
-    if (name === undefined && subtype === undefined && isoCurrencyCode === undefined && currentBalance === null) {
+    if (
+      name === undefined &&
+      type === undefined &&
+      subtype === undefined &&
+      isoCurrencyCode === undefined &&
+      currentBalance === null
+    ) {
       return NextResponse.json(
         { error: 'No updateable fields provided', code: 'INVALID_REQUEST' },
         { status: 400 }
@@ -64,6 +71,11 @@ export async function PATCH(
       values.push(name.trim());
       setClause.push(`name = $${values.length}`);
       updates.push('name');
+    }
+    if (type !== undefined) {
+      values.push(type.trim().toLowerCase());
+      setClause.push(`type = $${values.length}`);
+      updates.push('type');
     }
     if (subtype !== undefined) {
       values.push(subtype.trim().toLowerCase());

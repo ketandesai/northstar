@@ -6,7 +6,7 @@ import Button from '../ui/Button';
 
 interface AccountRowProps {
   account: ConnectedAccount;
-  onEditAsset?: (account: ConnectedAccount) => void;
+  onEditAccount?: (account: ConnectedAccount) => void;
   onRemoveAccount?: (accountId: string) => void;
 }
 
@@ -39,7 +39,7 @@ const getAssetIcon = (subtype: string | null) => {
   }
 };
 
-export default function AccountRow({ account, onEditAsset, onRemoveAccount }: AccountRowProps) {
+export default function AccountRow({ account, onEditAccount, onRemoveAccount }: AccountRowProps) {
   const isAsset = isManualAsset(account);
   const currentBal = account.balances.current ?? account.balances.available;
   const availableBal = account.balances.available;
@@ -83,16 +83,16 @@ export default function AccountRow({ account, onEditAsset, onRemoveAccount }: Ac
           )}
         </div>
 
-        {((onEditAsset && isAsset) || onRemoveAccount) && (
+        {(onEditAccount || onRemoveAccount) && (
           <div className="flex items-center gap-1">
-            {isAsset && onEditAsset && (
+            {onEditAccount && (
               <Button
                 variant="ghost"
                 hoverAccent="blue"
-                onClick={() => onEditAsset(account)}
+                onClick={() => onEditAccount(account)}
                 icon={<Pencil className="w-4 h-4" />}
-                title="Edit Asset"
-                aria-label="Edit asset"
+                title="Edit Account"
+                aria-label="Edit account"
               />
             )}
             {onRemoveAccount && (

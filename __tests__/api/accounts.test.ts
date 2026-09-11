@@ -193,6 +193,62 @@ describe('/api/accounts', () => {
     );
   });
 
+  it('PATCH /api/accounts/[id] updates linked account name and subtype', async () => {
+    const updatedRow = {
+      ...mockDbAccounts[0],
+      name: 'Everyday Checking',
+      subtype: 'savings',
+    };
+
+    const queryMock = vi
+      .spyOn(dbLib, 'query')
+      .mockResolvedValue([updatedRow] as never[]);
+
+    const req = new Request('http://localhost:3000/api/accounts/acc_01', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Everyday Checking', subtype: 'savings' }),
+    });
+
+    const res = await PATCH(req, { params: Promise.resolve({ id: 'acc_01' }) });
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.account).toMatchObject({
+      id: 'acc_01',
+      name: 'Everyday Checking',
+      subtype: 'savings',
+    });
+    expect(data.updated).toEqual(expect.arrayContaining(['name', 'subtype']));
+    // Name/subtype edits do not write a balance-history snapshot
+    expect(queryMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('PATCH /api/accounts/[id] updates the account type', async () => {
+    const updatedRow = { ...mockDbAccounts[0], type: 'investment' };
+
+    const queryMock = vi
+      .spyOn(dbLib, 'query')
+      .mockResolvedValue([updatedRow] as never[]);
+
+    const req = new Request('http://localhost:3000/api/accounts/acc_01', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'Investment' }),
+    });
+
+    const res = await PATCH(req, { params: Promise.resolve({ id: 'acc_01' }) });
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.updated).toContain('type');
+
+    const sql = queryMock.mock.calls[0][0] as string;
+    expect(sql).toContain('type = $');
+    expect(queryMock.mock.calls[0][1]).toContain('investment');
+  });
+
   it('PATCH /api/accounts/[id] with no fields returns 400', async () => {
     const queryMock = vi.spyOn(dbLib, 'query').mockResolvedValue([] as never[]);
 

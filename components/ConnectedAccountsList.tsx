@@ -11,6 +11,7 @@ import AccountsSection from './accounts/AccountsSection';
 import MetricsBanner from './accounts/MetricsBanner';
 import LoadingState from './accounts/LoadingState';
 import EmptyState from './accounts/EmptyState';
+import EditAccountModal from './accounts/EditAccountModal';
 
 interface ConnectedAccountsListProps {
   accounts: ConnectedAccount[];
@@ -20,6 +21,7 @@ interface ConnectedAccountsListProps {
     accountId: string,
     patch: {
       name?: string;
+      type?: string;
       subtype?: string;
       currentBalance?: number | null;
       isoCurrencyCode?: string;
@@ -43,6 +45,8 @@ export default function ConnectedAccountsList({
 }: ConnectedAccountsListProps) {
   const [assetModalOpen, setAssetModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<ConnectedAccount | null>(null);
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<ConnectedAccount | null>(null);
 
   const linkedAccounts = accounts.filter((a) => !isManualAsset(a));
   const manualAssets = accounts.filter(isManualAsset);
@@ -52,9 +56,14 @@ export default function ConnectedAccountsList({
     setAssetModalOpen(true);
   };
 
-  const openEditAsset = (asset: ConnectedAccount) => {
-    setEditingAsset(asset);
-    setAssetModalOpen(true);
+  const openEditAccount = (account: ConnectedAccount) => {
+    if (isManualAsset(account)) {
+      setEditingAsset(account);
+      setAssetModalOpen(true);
+      return;
+    }
+    setEditingAccount(account);
+    setAccountModalOpen(true);
   };
 
   const assetModal = (
@@ -68,6 +77,17 @@ export default function ConnectedAccountsList({
     />
   );
 
+  const accountEditModal =
+    editingAccount && onUpdateAccount ? (
+      <EditAccountModal
+        key={`edit-${editingAccount.id}`}
+        open={accountModalOpen}
+        onOpenChange={setAccountModalOpen}
+        account={editingAccount}
+        onUpdate={onUpdateAccount}
+      />
+    ) : null;
+
   if (isLoading && accounts.length === 0) {
     return <LoadingState />;
   }
@@ -77,6 +97,7 @@ export default function ConnectedAccountsList({
       <>
         <EmptyState onAccountsAdded={onAccountsAdded} onAddAsset={openAddAsset} />
         {assetModal}
+        {accountEditModal}
       </>
     );
   }
@@ -94,7 +115,7 @@ export default function ConnectedAccountsList({
     <AccountRow
       key={account.id}
       account={account}
-      onEditAsset={onUpdateAccount ? openEditAsset : undefined}
+      onEditAccount={onUpdateAccount ? openEditAccount : undefined}
       onRemoveAccount={onRemoveAccount}
     />
   );
@@ -164,6 +185,7 @@ export default function ConnectedAccountsList({
       </AccountsSection>
 
       {assetModal}
+      {accountEditModal}
     </div>
   );
 }

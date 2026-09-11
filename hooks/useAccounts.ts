@@ -154,6 +154,7 @@ export function useAccounts() {
       accountId: string,
       patch: {
         name?: string;
+        type?: string;
         subtype?: string;
         currentBalance?: number | null;
         isoCurrencyCode?: string;
@@ -168,6 +169,7 @@ export function useAccounts() {
             ? {
                 ...acc,
                 ...(patch.name !== undefined ? { name: patch.name } : {}),
+                ...(patch.type !== undefined ? { type: patch.type } : {}),
                 ...(patch.subtype !== undefined ? { subtype: patch.subtype } : {}),
                 ...(patch.isoCurrencyCode !== undefined
                   ? {

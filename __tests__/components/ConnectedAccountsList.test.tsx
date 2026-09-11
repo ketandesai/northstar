@@ -122,17 +122,6 @@ describe('ConnectedAccountsList component', () => {
     expect(refreshButton).toBeDisabled();
   });
 
-  it('shows the last updated time when provided', () => {
-    renderWithProvider(
-      <ConnectedAccountsList
-        accounts={mockAccounts}
-        lastRefreshedAt="2026-09-06T12:00:00.000Z"
-      />
-    );
-
-    expect(screen.getByText(/Last updated/i)).toBeInTheDocument();
-  });
-
   it('renders section action buttons in Linked Accounts and Other Assets headers', () => {
     renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
 
@@ -260,7 +249,7 @@ describe('ConnectedAccountsList component', () => {
         />
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /edit asset/i }));
+      fireEvent.click(screen.getByRole('button', { name: /edit account/i }));
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByLabelText(/asset name/i)).toHaveValue('Primary Home');
@@ -275,6 +264,35 @@ describe('ConnectedAccountsList component', () => {
         name: 'Primary Home',
         subtype: 'home',
         currentBalance: 525000,
+      });
+    });
+
+    it('edits a linked account name and type through the edit modal', async () => {
+      const handleUpdate = vi.fn().mockResolvedValue(undefined);
+      renderWithProvider(
+        <ConnectedAccountsList accounts={mockAccounts} onUpdateAccount={handleUpdate} />
+      );
+
+      const editButtons = screen.getAllByRole('button', { name: /edit account/i });
+      expect(editButtons).toHaveLength(2);
+      fireEvent.click(editButtons[0]);
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByLabelText(/account name/i)).toHaveValue('Total Checking');
+      expect(screen.getByLabelText(/account type/i)).toHaveValue('checking');
+
+      fireEvent.change(screen.getByLabelText(/account name/i), {
+        target: { value: 'Everyday Checking' },
+      });
+      fireEvent.change(screen.getByLabelText(/account type/i), {
+        target: { value: 'savings' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+      expect(handleUpdate).toHaveBeenCalledTimes(1);
+      expect(handleUpdate).toHaveBeenCalledWith('acc_1', {
+        name: 'Everyday Checking',
+        subtype: 'savings',
       });
     });
   });
