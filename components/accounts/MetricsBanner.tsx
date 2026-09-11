@@ -1,6 +1,5 @@
 import React from 'react';
-import { CheckCircle2, RefreshCw } from 'lucide-react';
-import Button from '../ui/Button';
+import { CheckCircle2 } from 'lucide-react';
 import { formatCurrency, formatTimestamp } from './format';
 
 interface MetricsBannerProps {
@@ -8,8 +7,6 @@ interface MetricsBannerProps {
   trackedCount: number;
   institutionCount: number;
   lastRefreshedAt?: string | null;
-  isRefreshing?: boolean;
-  onRefreshBalances?: () => void;
 }
 
 interface MetricCardProps {
@@ -35,8 +32,6 @@ export default function MetricsBanner({
   trackedCount,
   institutionCount,
   lastRefreshedAt = null,
-  isRefreshing = false,
-  onRefreshBalances,
 }: MetricsBannerProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -52,35 +47,23 @@ export default function MetricsBanner({
         subtext="Secured via Plaid Link"
       />
 
-      <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs flex flex-col justify-between">
-        <div>
-          <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            Connection Status
+      <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+        <span className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          Connection Status
+        </span>
+        <div className="mt-2 flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Active & Syncing</span>
+        </div>
+        {lastRefreshedAt ? (
+          <span className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 block">
+            Last updated {formatTimestamp(lastRefreshedAt)}
           </span>
-          <div className="mt-2 flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Active & Syncing</span>
-          </div>
-          {lastRefreshedAt && (
-            <span className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1 block">
-              Last updated {formatTimestamp(lastRefreshedAt)}
-            </span>
-          )}
-        </div>
-        <div className="pt-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRefreshBalances}
-            disabled={isRefreshing || !onRefreshBalances}
-            loading={isRefreshing}
-            icon={<RefreshCw className="w-3.5 h-3.5" />}
-            className="w-full text-xs"
-            aria-label="Refresh balances"
-          >
-            {isRefreshing ? 'Refreshing...' : 'Refresh balances'}
-          </Button>
-        </div>
+        ) : (
+          <span className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 block">
+            Syncs automatically via Plaid
+          </span>
+        )}
       </div>
     </div>
   );

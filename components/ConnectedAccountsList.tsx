@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, RefreshCw } from 'lucide-react';
 import { ConnectedAccount, isManualAsset } from '@/types/account';
 import AddAccountButton from './AddAccountButton';
 import AddAssetModal from './AddAssetModal';
@@ -106,8 +106,6 @@ export default function ConnectedAccountsList({
         trackedCount={trackedCount}
         institutionCount={institutionCount}
         lastRefreshedAt={lastRefreshedAt}
-        isRefreshing={isRefreshing}
-        onRefreshBalances={onRefreshBalances}
       />
 
       <AccountsSection
@@ -117,11 +115,24 @@ export default function ConnectedAccountsList({
         plural="accounts"
         emptyMessage={'No bank accounts connected yet. Use \u201CAdd Account\u201D to link one via Plaid.'}
         action={
-          <AddAccountButton
-            onAccountsAdded={onAccountsAdded}
-            variant="compact"
-            size="sm"
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="compact"
+              size="sm"
+              onClick={onRefreshBalances}
+              disabled={isRefreshing || !onRefreshBalances}
+              loading={isRefreshing}
+              icon={<RefreshCw className="w-3.5 h-3.5" />}
+              aria-label="Refresh balances"
+            >
+              {isRefreshing ? 'Refreshing...' : 'Refresh balances'}
+            </Button>
+            <AddAccountButton
+              onAccountsAdded={onAccountsAdded}
+              variant="compact"
+              size="sm"
+            />
+          </div>
         }
       >
         {linkedAccounts.map(renderAccountRow)}

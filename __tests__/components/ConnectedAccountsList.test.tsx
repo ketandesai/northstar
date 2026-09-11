@@ -137,6 +137,10 @@ describe('ConnectedAccountsList component', () => {
     renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
 
     const linkedSectionHeader = screen.getByText('Linked Accounts').closest('div')!.parentElement!;
+    const refreshBtn = within(linkedSectionHeader).getByRole('button', { name: /refresh balances/i });
+    expect(refreshBtn).toBeInTheDocument();
+    expect(refreshBtn).toHaveClass('bg-blue-50');
+
     expect(
       within(linkedSectionHeader).getByRole('button', { name: /add account/i })
     ).toBeInTheDocument();
