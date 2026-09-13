@@ -86,6 +86,7 @@ export interface Database {
           mask: string | null;
           type: string;
           subtype: string | null;
+          category: string | null;
           available_balance: number | null;
           current_balance: number | null;
           iso_currency_code: string;
@@ -103,6 +104,7 @@ export interface Database {
           mask?: string | null;
           type: string;
           subtype?: string | null;
+          category?: string | null;
           available_balance?: number | null;
           current_balance?: number | null;
           iso_currency_code?: string;
@@ -120,6 +122,7 @@ export interface Database {
           mask?: string | null;
           type?: string;
           subtype?: string | null;
+          category?: string | null;
           available_balance?: number | null;
           current_balance?: number | null;
           iso_currency_code?: string;
@@ -253,6 +256,7 @@ export function mapAccountRowToConnectedAccount(row: AccountRow): ConnectedAccou
     mask: row.mask || '••••',
     type: row.type,
     subtype: row.subtype,
+    category: (row.category as ConnectedAccount['category']) ?? null,
     balances: {
       available: row.available_balance !== null ? Number(row.available_balance) : null,
       current: row.current_balance !== null ? Number(row.current_balance) : null,
@@ -284,6 +288,7 @@ export function mapConnectedAccountToInsert(
     mask: account.mask || null,
     type: account.type,
     subtype: account.subtype || null,
+    category: account.category ?? null,
     available_balance: account.balances.available,
     current_balance: account.balances.current,
     iso_currency_code: account.balances.isoCurrencyCode || 'USD',

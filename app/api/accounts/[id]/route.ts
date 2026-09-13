@@ -6,6 +6,9 @@ import {
   mapAccountRowToConnectedAccount,
 } from '@/types/database';
 import { upsertBalanceSnapshot } from '@/lib/balance-history';
+import { CATEGORY_OPTIONS } from '@/types/account';
+
+const VALID_CATEGORIES = new Set(CATEGORY_OPTIONS.map((opt) => opt.value));
 
 /**
  * Updates an existing account / manual asset. Used to revalue manually
@@ -30,6 +33,8 @@ export async function PATCH(
     const name = typeof body.name === 'string' ? body.name : undefined;
     const type = typeof body.type === 'string' ? body.type : undefined;
     const subtype = typeof body.subtype === 'string' ? body.subtype : undefined;
+    const category =
+      typeof body.category === 'string' ? body.category.trim().toLowerCase() : undefined;
     const isoCurrencyCode =
       typeof body.isoCurrencyCode === 'string' ? body.isoCurrencyCode : undefined;
     const currentBalance =
@@ -41,6 +46,7 @@ export async function PATCH(
       name === undefined &&
       type === undefined &&
       subtype === undefined &&
+      category === undefined &&
       isoCurrencyCode === undefined &&
       currentBalance === null
     ) {
@@ -59,6 +65,15 @@ export async function PATCH(
     if (currentBalance !== null && Number.isNaN(currentBalance)) {
       return NextResponse.json(
         { error: 'Current balance must be a number', code: 'INVALID_REQUEST' },
+        { status: 400 }
+      );
+    }
+    if (category !== undefined && !VALID_CATEGORIES.has(category)) {
+      return NextResponse.json(
+        {
+          error: `Category must be one of: ${[...VALID_CATEGORIES].join(', ')}`,
+          code: 'INVALID_REQUEST',
+        },
         { status: 400 }
       );
     }
@@ -81,6 +96,11 @@ export async function PATCH(
       values.push(subtype.trim().toLowerCase());
       setClause.push(`subtype = $${values.length}`);
       updates.push('subtype');
+    }
+    if (category !== undefined) {
+      values.push(category);
+      setClause.push(`category = $${values.length}`);
+      updates.push('category');
     }
     if (isoCurrencyCode !== undefined) {
       values.push(isoCurrencyCode.trim().toUpperCase());

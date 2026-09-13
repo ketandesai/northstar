@@ -9,11 +9,15 @@ import {
   buildManualAsset,
   getAssetCategoryLabel,
   ConnectedAccount,
+  CATEGORY_OPTIONS,
+  AccountCategory,
 } from '@/types/account';
+import { getAccountCategory } from '@/lib/account-allocation';
 
 interface AssetPatch {
   name?: string;
   subtype?: string;
+  category?: AccountCategory;
   currentBalance?: number | null;
   isoCurrencyCode?: string;
 }
@@ -26,6 +30,18 @@ interface AddAssetModalProps {
   onSave?: (asset: ConnectedAccount) => void | Promise<void>;
   onUpdate?: (accountId: string, patch: AssetPatch) => void | Promise<void>;
 }
+
+const defaultCategoryForSubtype = (sub: AssetCategory): AccountCategory => {
+  switch (sub) {
+    case 'home':
+      return 'property';
+    case 'investment':
+    case 'private_equity':
+      return 'investment';
+    default:
+      return 'other';
+  }
+};
 
 export default function AddAssetModal({
   open,
@@ -40,6 +56,9 @@ export default function AddAssetModal({
     isEditing && ASSET_CATEGORIES.includes(asset.subtype as AssetCategory)
       ? (asset.subtype as AssetCategory)
       : 'home'
+  );
+  const [category, setCategory] = useState<AccountCategory>(
+    isEditing ? asset.category ?? getAccountCategory(asset) : defaultCategoryForSubtype('home')
   );
   const [value, setValue] = useState(
     isEditing && asset.balances.current !== null ? String(asset.balances.current) : ''
@@ -76,12 +95,14 @@ export default function AddAssetModal({
           name: trimmedName,
           subtype,
           currentBalance: parsedValue,
+          category,
         });
       } else if (onSave) {
         const manualAsset = buildManualAsset({
           name: trimmedName,
           subtype,
           value: parsedValue,
+          category,
         });
         await onSave(manualAsset);
       }
@@ -143,17 +164,41 @@ export default function AddAssetModal({
 
           <div>
             <label htmlFor="asset-type" className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
-              Category
+              Asset Type
             </label>
             <select
               id="asset-type"
               value={subtype}
-              onChange={(e) => setSubtype(e.target.value as AssetCategory)}
+              onChange={(e) => {
+                const next = e.target.value as AssetCategory;
+                setSubtype(next);
+                if (!isEditing) {
+                  setCategory(defaultCategoryForSubtype(next));
+                }
+              }}
               className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
             >
               {ASSET_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
                   {getAssetCategoryLabel(cat)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="asset-card" className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+              Card
+            </label>
+            <select
+              id="asset-card"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as AccountCategory)}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+            >
+              {CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>

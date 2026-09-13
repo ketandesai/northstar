@@ -249,6 +249,45 @@ describe('/api/accounts', () => {
     expect(queryMock.mock.calls[0][1]).toContain('investment');
   });
 
+  it('PATCH /api/accounts/[id] updates the account category', async () => {
+    const updatedRow = { ...mockDbAccounts[0], category: 'retirement' };
+
+    const queryMock = vi
+      .spyOn(dbLib, 'query')
+      .mockResolvedValue([updatedRow] as never[]);
+
+    const req = new Request('http://localhost:3000/api/accounts/acc_01', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: 'retirement' }),
+    });
+
+    const res = await PATCH(req, { params: Promise.resolve({ id: 'acc_01' }) });
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.account).toMatchObject({ id: 'acc_01', category: 'retirement' });
+    expect(data.updated).toContain('category');
+
+    const sql = queryMock.mock.calls[0][0] as string;
+    expect(sql).toContain('category = $');
+    expect(queryMock.mock.calls[0][1]).toContain('retirement');
+  });
+
+  it('PATCH /api/accounts/[id] rejects an invalid category', async () => {
+    const req = new Request('http://localhost:3000/api/accounts/acc_01', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: 'nonsense' }),
+    });
+
+    const res = await PATCH(req, { params: Promise.resolve({ id: 'acc_01' }) });
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.code).toBe('INVALID_REQUEST');
+  });
+
   it('PATCH /api/accounts/[id] with no fields returns 400', async () => {
     const queryMock = vi.spyOn(dbLib, 'query').mockResolvedValue([] as never[]);
 

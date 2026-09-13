@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Plus, Package, RefreshCw } from 'lucide-react';
-import { ConnectedAccount, isManualAsset } from '@/types/account';
-import { getAccountCategory } from '@/lib/account-allocation';
+import { ConnectedAccount, isManualAsset, AccountCategory } from '@/types/account';
+import { getEffectiveCategory } from '@/lib/account-allocation';
 import AddAccountButton from './AddAccountButton';
 import AddAssetModal from './AddAssetModal';
 import Button from './ui/Button';
@@ -22,6 +22,7 @@ interface ConnectedAccountsListProps {
       name?: string;
       type?: string;
       subtype?: string;
+      category?: AccountCategory;
       currentBalance?: number | null;
       isoCurrencyCode?: string;
     }
@@ -45,15 +46,16 @@ export default function ConnectedAccountsList({
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<ConnectedAccount | null>(null);
 
-  const linkedAccounts = accounts.filter((a) => !isManualAsset(a));
-  const manualAssets = accounts.filter(isManualAsset);
+  const byCategory = (category: string) =>
+    accounts.filter((a) => getEffectiveCategory(a) === category);
 
-  const cashAccounts = linkedAccounts.filter((a) => getAccountCategory(a) === 'cash');
-  const investmentAccounts = linkedAccounts.filter((a) => getAccountCategory(a) === 'investment');
-  const retirementAccounts = linkedAccounts.filter((a) => getAccountCategory(a) === 'retirement');
-  const creditAccounts = linkedAccounts.filter((a) => {
-    const category = getAccountCategory(a);
-    return category !== 'cash' && category !== 'investment' && category !== 'retirement';
+  const cashAccounts = byCategory('cash');
+  const investmentAccounts = byCategory('investment');
+  const retirementAccounts = byCategory('retirement');
+  const creditAccounts = byCategory('credit');
+  const otherAssets = accounts.filter((a) => {
+    const category = getEffectiveCategory(a);
+    return category === 'property' || category === 'other';
   });
 
   const openAddAsset = () => {
@@ -162,7 +164,7 @@ export default function ConnectedAccountsList({
 
       <AccountCategoryCard
         title="Other Assets"
-        accounts={manualAssets}
+        accounts={otherAssets}
         singular="asset"
         plural="assets"
         emptyMessage="Track your home, car, private equity, and other assets to see your full net worth."

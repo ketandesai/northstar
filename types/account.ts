@@ -16,11 +16,47 @@ export interface ConnectedAccount {
   mask: string;
   type: string;
   subtype: string | null;
+  /** User-editable card grouping. Null falls back to derivation from type/subtype. */
+  category?: AccountCategory | null;
   balances: AccountBalance;
   institution: BankInstitution;
   connectedAt?: string;
   updatedAt?: string;
 }
+
+/**
+ * The grouping an account is bucketed into (drives the dashboard cards and the
+ * asset allocation chart). When `category` is null, it is derived from type/subtype.
+ */
+export type AccountCategory =
+  | 'retirement'
+  | 'cash'
+  | 'property'
+  | 'investment'
+  | 'credit'
+  | 'other';
+
+export const CATEGORY_LABELS: Record<AccountCategory, string> = {
+  retirement: 'Retirement',
+  cash: 'Cash',
+  property: 'Property',
+  investment: 'Investments',
+  credit: 'Credit',
+  other: 'Other',
+};
+
+export const CATEGORY_COLORS: Record<AccountCategory, string> = {
+  retirement: '#2563eb',
+  cash: '#10b981',
+  property: '#0ea5e9',
+  investment: '#8b5cf6',
+  credit: '#ef4444',
+  other: '#71717a',
+};
+
+export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS).map(
+  ([value, label]) => ({ value, label })
+);
 
 /** The account type used for manually entered non-bank assets. */
 export const MANUAL_ASSET_TYPE = 'asset';
@@ -61,6 +97,7 @@ export interface ManualAssetInput {
   subtype: AssetCategory;
   value: number;
   isoCurrencyCode?: string;
+  category?: AccountCategory;
 }
 
 /**
@@ -80,6 +117,7 @@ export function buildManualAsset(input: ManualAssetInput): ConnectedAccount {
     mask: '',
     type: MANUAL_ASSET_TYPE,
     subtype: input.subtype,
+    category: input.category ?? null,
     balances: {
       available: null,
       current: input.value,

@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import { AlertCircle, X } from 'lucide-react';
 import Button from '../ui/Button';
-import { ConnectedAccount } from '@/types/account';
+import { ConnectedAccount, CATEGORY_OPTIONS, AccountCategory } from '@/types/account';
+import { getAccountCategory } from '@/lib/account-allocation';
 
 interface AccountPatch {
   name?: string;
   subtype?: string;
+  category?: AccountCategory;
 }
 
 interface EditAccountModalProps {
@@ -43,6 +45,9 @@ export default function EditAccountModal({
     );
     return match ? match.value : 'other';
   });
+  const [category, setCategory] = useState(
+    account.category ?? getAccountCategory(account)
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -68,6 +73,7 @@ export default function EditAccountModal({
       await onUpdate(account.id, {
         name: trimmedName,
         subtype: accountType,
+        category,
       });
       onOpenChange(false);
     } catch (err: unknown) {
@@ -97,7 +103,7 @@ export default function EditAccountModal({
               Edit Account
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Update the display name and type for this account.
+              Update the display name, account type, and card.
             </p>
           </div>
           <Button
@@ -136,6 +142,24 @@ export default function EditAccountModal({
               className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
             >
               {ACCOUNT_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="edit-account-card" className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+              Card
+            </label>
+            <select
+              id="edit-account-card"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as AccountCategory)}
+              className="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+            >
+              {CATEGORY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>

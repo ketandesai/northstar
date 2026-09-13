@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   getAccountCategory,
+  getEffectiveCategory,
   summarizeAllocations,
   getTotalValue,
 } from '@/lib/account-allocation';
@@ -71,9 +72,19 @@ describe('getAccountCategory', () => {
     ).toBe('investment');
   });
 
-  it('classifies other manual assets and loans as other', () => {
+  it('classifies credit cards and loans as credit', () => {
     expect(getAccountCategory(makeAccount({ type: 'asset', subtype: 'car', balance: 40000 }))).toBe('other');
-    expect(getAccountCategory(makeAccount({ type: 'loan', subtype: 'student', balance: 5000 }))).toBe('other');
+    expect(getAccountCategory(makeAccount({ type: 'credit', subtype: 'credit card', balance: 2000 }))).toBe(
+      'credit'
+    );
+    expect(getAccountCategory(makeAccount({ type: 'loan', subtype: 'student', balance: 5000 }))).toBe('credit');
+  });
+
+  it('prefers a stored category over the derived one', () => {
+    const account = makeAccount({ type: 'depository', subtype: 'checking', balance: 2500 });
+    expect(getEffectiveCategory(account)).toBe('cash');
+    expect(getEffectiveCategory({ ...account, category: 'retirement' })).toBe('retirement');
+    expect(getEffectiveCategory({ ...account, category: null })).toBe('cash');
   });
 });
 
@@ -123,6 +134,24 @@ describe('summarizeAllocations', () => {
     ]);
     expect(slices.find((s) => s.key === 'other')).toBeUndefined();
     expect(getTotalValue(slices)).toBe(8000);
+  });
+
+  it('excludes credit category liabilities even with a positive balance', () => {
+    const slices = summarizeAllocations([
+      makeAccount({ type: 'loan', subtype: 'student', balance: 5000 }),
+      makeAccount({ type: 'depository', subtype: 'checking', balance: 8000 }),
+    ]);
+    expect(slices.find((s) => s.key === 'credit')).toBeUndefined();
+    expect(getTotalValue(slices)).toBe(8000);
+  });
+
+  it('rebuckets accounts that carry a stored category', () => {
+    const slices = summarizeAllocations([
+      { ...makeAccount({ type: 'depository', subtype: 'checking', balance: 5000 }), category: 'retirement' },
+      makeAccount({ type: 'depository', subtype: 'savings', balance: 3000 }),
+    ]);
+    expect(slices.find((s) => s.key === 'retirement')!.value).toBe(5000);
+    expect(slices.find((s) => s.key === 'cash')!.value).toBe(3000);
   });
 
   it('excludes zero balance accounts', () => {

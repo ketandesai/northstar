@@ -71,11 +71,11 @@ export async function POST(req: Request) {
     for (const row of rowsToInsert) {
       const inserted = await query<AccountRow>(
         `INSERT INTO accounts (
-           id, user_id, item_id, name, official_name, mask, type, subtype,
+           id, user_id, item_id, name, official_name, mask, type, subtype, category,
            available_balance, current_balance, iso_currency_code,
            institution_id, institution_name, connected_at, updated_at
          )
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
          ON CONFLICT (id) DO UPDATE SET
            user_id = EXCLUDED.user_id,
            item_id = EXCLUDED.item_id,
@@ -84,6 +84,7 @@ export async function POST(req: Request) {
            mask = EXCLUDED.mask,
            type = EXCLUDED.type,
            subtype = EXCLUDED.subtype,
+           category = EXCLUDED.category,
            available_balance = EXCLUDED.available_balance,
            current_balance = EXCLUDED.current_balance,
            iso_currency_code = EXCLUDED.iso_currency_code,
@@ -101,6 +102,7 @@ export async function POST(req: Request) {
           row.mask,
           row.type,
           row.subtype,
+          row.category,
           row.available_balance,
           row.current_balance,
           row.iso_currency_code,

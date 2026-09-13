@@ -56,6 +56,7 @@ describe('EditAccountModal component', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByLabelText(/account name/i)).toHaveValue('Total Checking');
     expect(screen.getByLabelText(/account type/i)).toHaveValue('checking');
+    expect(screen.getByLabelText(/card/i)).toHaveValue('cash');
   });
 
   it('defaults an unknown subtype to Other', () => {
@@ -79,12 +80,16 @@ describe('EditAccountModal component', () => {
     fireEvent.change(screen.getByLabelText(/account type/i), {
       target: { value: 'savings' },
     });
+    fireEvent.change(screen.getByLabelText(/card/i), {
+      target: { value: 'retirement' },
+    });
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(handleUpdate).toHaveBeenCalledTimes(1);
     expect(handleUpdate).toHaveBeenCalledWith('acc_1', {
       name: 'Everyday Checking',
       subtype: 'savings',
+      category: 'retirement',
     });
     await waitFor(() => expect(handleOpenChange).toHaveBeenCalledWith(false));
   });

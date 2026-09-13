@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS public.accounts (
     mask TEXT,
     type TEXT NOT NULL,
     subtype TEXT,
+    category TEXT,
     available_balance NUMERIC(14, 2),
     current_balance NUMERIC(14, 2),
     iso_currency_code TEXT NOT NULL DEFAULT 'USD',

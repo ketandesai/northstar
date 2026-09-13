@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ConnectedAccount } from '@/types/account';
+import { ConnectedAccount, AccountCategory } from '@/types/account';
 
 export function useAccounts() {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
@@ -156,6 +156,7 @@ export function useAccounts() {
         name?: string;
         type?: string;
         subtype?: string;
+        category?: AccountCategory;
         currentBalance?: number | null;
         isoCurrencyCode?: string;
       }
@@ -171,6 +172,7 @@ export function useAccounts() {
                 ...(patch.name !== undefined ? { name: patch.name } : {}),
                 ...(patch.type !== undefined ? { type: patch.type } : {}),
                 ...(patch.subtype !== undefined ? { subtype: patch.subtype } : {}),
+                ...(patch.category !== undefined ? { category: patch.category } : {}),
                 ...(patch.isoCurrencyCode !== undefined
                   ? {
                       balances: {

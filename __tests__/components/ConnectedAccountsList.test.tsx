@@ -95,6 +95,17 @@ describe('ConnectedAccountsList component', () => {
     expect(within(cashCard).getByText('Premier Savings')).toBeInTheDocument();
   });
 
+  it('renders an account on the card matching its stored category', () => {
+    const movedAccount: ConnectedAccount = { ...mockAccounts[0], category: 'retirement' };
+    renderWithProvider(<ConnectedAccountsList accounts={[movedAccount, mockAccounts[1]]} />);
+
+    const retirementCard = screen.getByText('Retirement').closest('div')!.parentElement!.parentElement!;
+    expect(within(retirementCard).getByText('Total Checking')).toBeInTheDocument();
+
+    const cashCard = screen.getByText('Cash').closest('div')!.parentElement!.parentElement!;
+    expect(within(cashCard).getByText('Premier Savings')).toBeInTheDocument();
+  });
+
   it('calls onRemoveAccount when delete button is clicked', () => {
     const handleRemove = vi.fn();
     renderWithProvider(
@@ -216,7 +227,7 @@ describe('ConnectedAccountsList component', () => {
       fireEvent.change(labelIn(/asset name/i), {
         target: { value: 'Tesla Model 3' },
       });
-      fireEvent.change(labelIn(/category/i), {
+      fireEvent.change(labelIn(/asset type/i), {
         target: { value: 'car' },
       });
       fireEvent.change(labelIn(/current value/i), {
@@ -261,6 +272,7 @@ describe('ConnectedAccountsList component', () => {
         name: 'Primary Home',
         subtype: 'home',
         currentBalance: 525000,
+        category: 'property',
       });
     });
 
@@ -290,6 +302,7 @@ describe('ConnectedAccountsList component', () => {
       expect(handleUpdate).toHaveBeenCalledWith('acc_1', {
         name: 'Everyday Checking',
         subtype: 'savings',
+        category: 'cash',
       });
     });
   });

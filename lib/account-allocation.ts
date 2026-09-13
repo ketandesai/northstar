@@ -1,27 +1,13 @@
-import { ConnectedAccount, isManualAsset } from '@/types/account';
+import {
+  AccountCategory,
+  CATEGORY_LABELS,
+  CATEGORY_COLORS,
+  ConnectedAccount,
+  isManualAsset,
+} from '@/types/account';
 
-export type AccountCategory =
-  | 'retirement'
-  | 'cash'
-  | 'property'
-  | 'investment'
-  | 'other';
-
-export const CATEGORY_LABELS: Record<AccountCategory, string> = {
-  retirement: 'Retirement',
-  cash: 'Cash',
-  property: 'Property',
-  investment: 'Investment',
-  other: 'Other',
-};
-
-export const CATEGORY_COLORS: Record<AccountCategory, string> = {
-  retirement: '#2563eb',
-  cash: '#10b981',
-  property: '#0ea5e9',
-  investment: '#8b5cf6',
-  other: '#71717a',
-};
+export type { AccountCategory };
+export { CATEGORY_LABELS, CATEGORY_COLORS };
 
 const RETIREMENT_SUBTYPES = new Set([
   '401a',
@@ -68,11 +54,11 @@ function isRetirementSubtype(subtype: string | null): boolean {
 }
 
 /**
- * Buckets an account into Retirement / Cash / Property / Investment / Other.
- * Credit card accounts are intentionally excluded from the breakdown.
+ * Derives a default category from the account's type/subtype. Used when no
+ * user-edited category is stored (and as the initial pick in edit forms).
  */
 export function getAccountCategory(account: ConnectedAccount): AccountCategory {
-  if (account.type === 'credit') return 'other';
+  if (account.type === 'credit' || account.type === 'loan') return 'credit';
 
   if (isManualAsset(account)) {
     if (account.subtype === 'home') return 'property';
@@ -91,6 +77,18 @@ export function getAccountCategory(account: ConnectedAccount): AccountCategory {
   return 'other';
 }
 
+/**
+ * The category that actually applies: the user-edited stored value when set,
+ * otherwise the derivation from type/subtype.
+ */
+export function getEffectiveCategory(account: ConnectedAccount): AccountCategory {
+  return account.category ?? getAccountCategory(account);
+}
+
+export function getAccountBalance(account: ConnectedAccount): number {
+  return account.balances.current ?? account.balances.available ?? 0;
+}
+
 export interface AllocationSlice {
   key: AccountCategory;
   label: string;
@@ -99,29 +97,25 @@ export interface AllocationSlice {
   color: string;
 }
 
-export function getAccountBalance(account: ConnectedAccount): number {
-  return account.balances.current ?? account.balances.available ?? 0;
-}
-
 /**
- * Sums positive, non-credit account balances per category. Negative
- * liabilities and credit cards are excluded from the allocation.
+ * Sums positive, non-credit account balances per category. Liabilities
+ * (credit category) and non-positive balances are excluded from the allocation.
  */
 export function summarizeAllocations(accounts: ConnectedAccount[]): AllocationSlice[] {
   const totals = new Map<AccountCategory, number>();
   const counts = new Map<AccountCategory, number>();
 
   for (const account of accounts) {
-    if (account.type === 'credit') continue;
+    const category = getEffectiveCategory(account);
+    if (category === 'credit') continue;
     const balance = getAccountBalance(account);
     if (balance <= 0) continue;
 
-    const category = getAccountCategory(account);
     totals.set(category, (totals.get(category) ?? 0) + balance);
     counts.set(category, (counts.get(category) ?? 0) + 1);
   }
 
-  const order: AccountCategory[] = ['retirement', 'cash', 'property', 'investment', 'other'];
+  const order: AccountCategory[] = ['retirement', 'cash', 'property', 'investment', 'credit', 'other'];
   const slices: AllocationSlice[] = [];
   for (const key of order) {
     const value = totals.get(key) ?? 0;
