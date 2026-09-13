@@ -34,12 +34,12 @@ export default function Home() {
       <Header />
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-8 sm:pb-10">
         {/* Plaid Config Notice (if keys missing) */}
         <PlaidSetupBanner onLoadDemoAccount={addAccounts} />
 
         {/* Net Worth Trend */}
-        <div className="mt-8">
+        <div className="mt-4">
           <NetWorthChart
             points={netWorthPoints}
             loading={netWorthLoading}
@@ -48,15 +48,17 @@ export default function Home() {
         </div>
 
         {/* Accounts List Section */}
-        <ConnectedAccountsList
-          accounts={accounts}
-          isLoading={loading}
-          onRemoveAccount={removeAccount}
-          onAccountsAdded={addAccounts}
-          onUpdateAccount={updateAccount}
-          onRefreshBalances={refreshBalances}
-          isRefreshing={isRefreshing}
-        />
+        <div className="mt-8">
+          <ConnectedAccountsList
+            accounts={accounts}
+            isLoading={loading}
+            onRemoveAccount={removeAccount}
+            onAccountsAdded={addAccounts}
+            onUpdateAccount={updateAccount}
+            onRefreshBalances={refreshBalances}
+            isRefreshing={isRefreshing}
+          />
+        </div>
 
         {/* Asset Allocation */}
         <div className="mt-8">
