@@ -39,6 +39,15 @@ export default function Home() {
         {/* Plaid Config Notice (if keys missing) */}
         <PlaidSetupBanner onLoadDemoAccount={addAccounts} />
 
+        {/* Net Worth Trend */}
+        <div className="mt-8">
+          <NetWorthChart
+            points={netWorthPoints}
+            loading={netWorthLoading}
+            error={netWorthError}
+          />
+        </div>
+
         {/* Accounts List Section */}
         <ConnectedAccountsList
           accounts={accounts}
@@ -51,13 +60,8 @@ export default function Home() {
           lastRefreshedAt={lastRefreshedAt}
         />
 
-        {/* Net Worth Trend + Asset Allocation */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          <NetWorthChart
-            points={netWorthPoints}
-            loading={netWorthLoading}
-            error={netWorthError}
-          />
+        {/* Asset Allocation */}
+        <div className="mt-8">
           <AllocationCard accounts={accounts} loading={loading} />
         </div>
       </main>
