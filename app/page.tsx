@@ -16,7 +16,6 @@ export default function Home() {
     accounts,
     loading,
     isRefreshing,
-    lastRefreshedAt,
     addAccounts,
     updateAccount,
     removeAccount,
@@ -57,7 +56,6 @@ export default function Home() {
           onUpdateAccount={updateAccount}
           onRefreshBalances={refreshBalances}
           isRefreshing={isRefreshing}
-          lastRefreshedAt={lastRefreshedAt}
         />
 
         {/* Asset Allocation */}

@@ -8,7 +8,6 @@ import AddAssetModal from './AddAssetModal';
 import Button from './ui/Button';
 import AccountRow from './accounts/AccountRow';
 import AccountsSection from './accounts/AccountsSection';
-import MetricsBanner from './accounts/MetricsBanner';
 import LoadingState from './accounts/LoadingState';
 import EmptyState from './accounts/EmptyState';
 import EditAccountModal from './accounts/EditAccountModal';
@@ -29,7 +28,6 @@ interface ConnectedAccountsListProps {
   ) => void | Promise<void>;
   onRefreshBalances?: () => void;
   isRefreshing?: boolean;
-  lastRefreshedAt?: string | null;
   isLoading?: boolean;
 }
 
@@ -40,7 +38,6 @@ export default function ConnectedAccountsList({
   onUpdateAccount,
   onRefreshBalances,
   isRefreshing = false,
-  lastRefreshedAt = null,
   isLoading = false,
 }: ConnectedAccountsListProps) {
   const [assetModalOpen, setAssetModalOpen] = useState(false);
@@ -102,15 +99,6 @@ export default function ConnectedAccountsList({
     );
   }
 
-  // Calculate total net balance (assets add, credit/loan subtract)
-  const totalBalance = accounts.reduce((sum, acc) => {
-    const bal = acc.balances.current ?? acc.balances.available ?? 0;
-    return acc.type === 'credit' || acc.type === 'loan' ? sum - bal : sum + bal;
-  }, 0);
-
-  const trackedCount = accounts.length;
-  const institutionCount = new Set(linkedAccounts.map((a) => a.institution.name)).size;
-
   const renderAccountRow = (account: ConnectedAccount) => (
     <AccountRow
       key={account.id}
@@ -122,13 +110,6 @@ export default function ConnectedAccountsList({
 
   return (
     <div className="space-y-6">
-      <MetricsBanner
-        totalBalance={totalBalance}
-        trackedCount={trackedCount}
-        institutionCount={institutionCount}
-        lastRefreshedAt={lastRefreshedAt}
-      />
-
       <AccountsSection
         title="Linked Accounts"
         count={linkedAccounts.length}
