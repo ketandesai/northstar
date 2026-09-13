@@ -82,11 +82,17 @@ describe('ConnectedAccountsList component', () => {
     expect(screen.getByText('$15,000.00')).toBeInTheDocument();
   });
 
-  it('displays correct aggregate net balance', () => {
+  it('renders accounts grouped into Cash / Investments / Retirement / Credit cards', () => {
     renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
-    // 2500 + 15000 = $17,500.00
-    expect(screen.getByText('$17,500.00')).toBeInTheDocument();
-    expect(screen.getByText(/Across 2 accounts & assets/i)).toBeInTheDocument();
+
+    expect(screen.getByText('Cash')).toBeInTheDocument();
+    expect(screen.getByText('Investments')).toBeInTheDocument();
+    expect(screen.getByText('Retirement')).toBeInTheDocument();
+    expect(screen.getByText('Credit')).toBeInTheDocument();
+
+    const cashCard = screen.getByText('Cash').closest('div')!.parentElement!.parentElement!;
+    expect(within(cashCard).getByText('Total Checking')).toBeInTheDocument();
+    expect(within(cashCard).getByText('Premier Savings')).toBeInTheDocument();
   });
 
   it('calls onRemoveAccount when delete button is clicked', () => {
@@ -122,16 +128,15 @@ describe('ConnectedAccountsList component', () => {
     expect(refreshButton).toBeDisabled();
   });
 
-  it('renders section action buttons in Linked Accounts and Other Assets headers', () => {
+  it('renders action buttons: Refresh + Add Account row above the cards, Add Asset on Other Assets', () => {
     renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
 
-    const linkedSectionHeader = screen.getByText('Linked Accounts').closest('div')!.parentElement!;
-    const refreshBtn = within(linkedSectionHeader).getByRole('button', { name: /refresh balances/i });
-    expect(refreshBtn).toBeInTheDocument();
-    expect(refreshBtn).toHaveClass('bg-blue-50');
-
+    const actionRow = screen.getByLabelText('Refresh balances').parentElement!;
     expect(
-      within(linkedSectionHeader).getByRole('button', { name: /add account/i })
+      within(actionRow).getByRole('button', { name: /refresh balances/i })
+    ).toBeInTheDocument();
+    expect(
+      within(actionRow).getByRole('button', { name: /add account/i })
     ).toBeInTheDocument();
 
     const assetsSectionHeader = screen.getByText('Other Assets').closest('div')!.parentElement!;
@@ -150,11 +155,11 @@ describe('ConnectedAccountsList component', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('triggers Plaid open when clicking Add Account in Linked Accounts section', () => {
+  it('triggers Plaid open when clicking Add Account in the action row', () => {
     renderWithProvider(<ConnectedAccountsList accounts={mockAccounts} />);
 
-    const linkedSectionHeader = screen.getByText('Linked Accounts').closest('div')!.parentElement!;
-    const addAccountBtn = within(linkedSectionHeader).getByRole('button', { name: /add account/i });
+    const actionRow = screen.getByLabelText('Refresh balances').parentElement!;
+    const addAccountBtn = within(actionRow).getByRole('button', { name: /add account/i });
     fireEvent.click(addAccountBtn);
 
     expect(mockOpen).toHaveBeenCalled();
@@ -188,14 +193,6 @@ describe('ConnectedAccountsList component', () => {
       expect(screen.getByText('Other Assets')).toBeInTheDocument();
       expect(screen.getByText('Primary Home')).toBeInTheDocument();
       expect(screen.getByText('$500,000.00')).toBeInTheDocument();
-    });
-
-    it('includes asset values in the total net balance', () => {
-      renderWithProvider(
-        <ConnectedAccountsList accounts={[...mockAccounts, mockAsset]} />
-      );
-      // 2500 + 15000 + 500000 = $517,500.00
-      expect(screen.getByText('$517,500.00')).toBeInTheDocument();
     });
 
     it('does not render a bank mask for assets', () => {

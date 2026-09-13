@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { Plus, Package, RefreshCw } from 'lucide-react';
 import { ConnectedAccount, isManualAsset } from '@/types/account';
+import { getAccountCategory } from '@/lib/account-allocation';
 import AddAccountButton from './AddAccountButton';
 import AddAssetModal from './AddAssetModal';
 import Button from './ui/Button';
-import AccountRow from './accounts/AccountRow';
-import AccountsSection from './accounts/AccountsSection';
+import AccountCategoryCard from './accounts/AccountCategoryCard';
 import LoadingState from './accounts/LoadingState';
 import EmptyState from './accounts/EmptyState';
 import EditAccountModal from './accounts/EditAccountModal';
@@ -47,6 +47,14 @@ export default function ConnectedAccountsList({
 
   const linkedAccounts = accounts.filter((a) => !isManualAsset(a));
   const manualAssets = accounts.filter(isManualAsset);
+
+  const cashAccounts = linkedAccounts.filter((a) => getAccountCategory(a) === 'cash');
+  const investmentAccounts = linkedAccounts.filter((a) => getAccountCategory(a) === 'investment');
+  const retirementAccounts = linkedAccounts.filter((a) => getAccountCategory(a) === 'retirement');
+  const creditAccounts = linkedAccounts.filter((a) => {
+    const category = getAccountCategory(a);
+    return category !== 'cash' && category !== 'investment' && category !== 'retirement';
+  });
 
   const openAddAsset = () => {
     setEditingAsset(null);
@@ -99,50 +107,62 @@ export default function ConnectedAccountsList({
     );
   }
 
-  const renderAccountRow = (account: ConnectedAccount) => (
-    <AccountRow
-      key={account.id}
-      account={account}
-      onEditAccount={onUpdateAccount ? openEditAccount : undefined}
-      onRemoveAccount={onRemoveAccount}
-    />
-  );
-
   return (
     <div className="space-y-6">
-      <AccountsSection
-        title="Linked Accounts"
-        count={linkedAccounts.length}
-        singular="account"
-        plural="accounts"
-        emptyMessage={'No bank accounts connected yet. Use \u201CAdd Account\u201D to link one via Plaid.'}
-        action={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="compact"
-              size="sm"
-              onClick={onRefreshBalances}
-              disabled={isRefreshing || !onRefreshBalances}
-              loading={isRefreshing}
-              icon={<RefreshCw className="w-3.5 h-3.5" />}
-              aria-label="Refresh balances"
-            >
-              {isRefreshing ? 'Refreshing...' : 'Refresh balances'}
-            </Button>
-            <AddAccountButton
-              onAccountsAdded={onAccountsAdded}
-              variant="compact"
-              size="sm"
-            />
-          </div>
-        }
-      >
-        {linkedAccounts.map(renderAccountRow)}
-      </AccountsSection>
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="compact"
+          size="sm"
+          onClick={onRefreshBalances}
+          disabled={isRefreshing || !onRefreshBalances}
+          loading={isRefreshing}
+          icon={<RefreshCw className="w-3.5 h-3.5" />}
+          aria-label="Refresh balances"
+        >
+          {isRefreshing ? 'Refreshing...' : 'Refresh balances'}
+        </Button>
+        <AddAccountButton
+          onAccountsAdded={onAccountsAdded}
+          variant="compact"
+          size="sm"
+        />
+      </div>
 
-      <AccountsSection
+      <AccountCategoryCard
+        title="Cash"
+        accounts={cashAccounts}
+        emptyMessage={'No cash accounts connected yet. Use \u201CAdd Account\u201D to link a checking or savings account.'}
+        onEditAccount={onUpdateAccount ? openEditAccount : undefined}
+        onRemoveAccount={onRemoveAccount}
+      />
+
+      <AccountCategoryCard
+        title="Investments"
+        accounts={investmentAccounts}
+        emptyMessage={'No investment accounts connected yet. Use \u201CAdd Account\u201D to link one via Plaid.'}
+        onEditAccount={onUpdateAccount ? openEditAccount : undefined}
+        onRemoveAccount={onRemoveAccount}
+      />
+
+      <AccountCategoryCard
+        title="Retirement"
+        accounts={retirementAccounts}
+        emptyMessage={'No retirement accounts connected yet. Use \u201CAdd Account\u201D to link one via Plaid.'}
+        onEditAccount={onUpdateAccount ? openEditAccount : undefined}
+        onRemoveAccount={onRemoveAccount}
+      />
+
+      <AccountCategoryCard
+        title="Credit"
+        accounts={creditAccounts}
+        emptyMessage="No credit cards or loans connected."
+        onEditAccount={onUpdateAccount ? openEditAccount : undefined}
+        onRemoveAccount={onRemoveAccount}
+      />
+
+      <AccountCategoryCard
         title="Other Assets"
-        count={manualAssets.length}
+        accounts={manualAssets}
         singular="asset"
         plural="assets"
         emptyMessage="Track your home, car, private equity, and other assets to see your full net worth."
@@ -161,9 +181,9 @@ export default function ConnectedAccountsList({
             Add Asset
           </Button>
         }
-      >
-        {manualAssets.map(renderAccountRow)}
-      </AccountsSection>
+        onEditAccount={onUpdateAccount ? openEditAccount : undefined}
+        onRemoveAccount={onRemoveAccount}
+      />
 
       {assetModal}
       {accountEditModal}
