@@ -1,6 +1,6 @@
 import React from 'react';
 import { ConnectedAccount, isManualAsset, getAssetCategoryLabel } from '@/types/account';
-import { formatCurrency } from './format';
+import { formatCurrency, formatRelativeTime } from './format';
 import { Pencil, Trash2, Landmark, CreditCard, PiggyBank, Wallet, Home, Car, Briefcase, TrendingUp, Package } from 'lucide-react';
 import Button from '../ui/Button';
 
@@ -76,9 +76,9 @@ export default function AccountRow({ account, onEditAccount, onRemoveAccount }: 
           <div className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             {formatCurrency(currentBal, account.balances.isoCurrencyCode)}
           </div>
-          {!isAsset && availableBal !== null && availableBal !== currentBal && (
+          {account.updatedAt && (
             <div className="text-xs text-zinc-400 dark:text-zinc-500">
-              Available: {formatCurrency(availableBal, account.balances.isoCurrencyCode)}
+              Updated {formatRelativeTime(account.updatedAt)}
             </div>
           )}
         </div>
